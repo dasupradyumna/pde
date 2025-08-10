@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/dasupradyumna/TEMPLATE/discussions
+    about: Please explore conversations in Discussions before submitting an issue
+  - name: Wiki
+    url: https://github.com/dasupradyumna/TEMPLATE/wiki
+    about: Please explore documentation in the Wiki before submitting an issue

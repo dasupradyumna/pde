@@ -1,0 +1,67 @@
+name: Sync Issue Labels
+
+on:
+  push:
+    paths: [.github/workflows/sync-issue-labels.yml]
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  LABELS: |
+    - name: <impl>
+      color: 551199
+      description: Track internal project development
+    - name: bug
+      color: 551111
+      description: Unexpected and undesired behavior
+    - name: chore
+      color: 555533
+      description: Refactoring and maintenance tasks
+    - name: copy
+      color: 555555
+      description: Problem already noted in another item
+    - name: doc
+      color: 333399
+      description: Enhance existing documentation
+    - name: feat
+      color: 447744
+      description: New feature request or enhancement
+    - name: help-wanted
+      color: 335555
+      description: Open to contribution from users
+    - name: not-planned
+      color: 000000
+      description: Not planned and will not be worked on
+    - name: stale
+      color: 555555
+      description: Closed due to insufficient activity
+    - name: waiting
+      color: 994422
+      description: Waiting for feedback from author
+
+jobs:
+  sync-labels:
+    name: Sync Labels with Specification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Delete all existing labels
+        run: |
+          gh label list --json name -q '.[].name' | \
+          while read -r label; do
+            gh label delete "$label" --yes || true
+          done
+
+      - name: Create labels from workflow env
+        run: |
+          echo "$LABELS" | yq -r '.[] | [.name, .color, .description] | @tsv' | \
+          while IFS=$'\t' read -r name color desc; do
+            gh label create "$name" --color "$color" --description "$desc"
+          done

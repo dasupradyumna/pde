@@ -1,0 +1,74 @@
+name: 'Project: Handle PRs'
+run-name: "Update Project - PR #${{ github.event.pull_request.number }}"
+
+on:
+  pull_request:
+    types: [opened, closed, reopened]
+
+permissions:
+  pull-requests: read
+
+env:
+  PROJECT_OWNER: dasupradyumna
+
+jobs:
+
+  handle-open:
+    name: Handle New PRs
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+
+    steps:
+
+      - name: Add New PR to Project
+        uses: actions/add-to-project@v1.0.2
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          project-url: ${{ secrets.PROJECT_URL }}
+
+      - name: User -> EVALUATE | Owner -> ONGOING
+        uses: EndBug/project-fields@v2.1.0
+        with:
+          github_token: ${{ secrets.PROJECT_TOKEN }}
+          project_url: ${{ secrets.PROJECT_URL }}
+          operation: set
+          fields: Status
+          values: ${{ github.actor == env.PROJECT_OWNER && 'ONGOING' || 'EVALUATE' }}
+
+  handle-close:
+    name: Handle Closed PRs
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Update Status to COMPLETED or DISCARDED
+        uses: EndBug/project-fields@v2.1.0
+        with:
+          github_token: ${{ secrets.PROJECT_TOKEN }}
+          project_url: ${{ secrets.PROJECT_URL }}
+          operation: set
+          fields: Status
+          values: ${{ github.event.pull_request.merged == true && 'COMPLETED' || 'DISCARDED' }}
+      - name: Clear dates for DISCARDED PRs
+        if: github.event.pull_request.merged == false
+        uses: EndBug/project-fields@v2.1.0
+        with:
+          github_token: ${{ secrets.PROJECT_TOKEN }}
+          project_url: ${{ secrets.PROJECT_URL }}
+          operation: clear
+          fields: Start,End
+
+  handle-reopen:
+    name: Handle Reopened PRs
+    runs-on: ubuntu-latest
+    if: github.event.action == 'reopened'
+
+    steps:
+      - name: Reopened -> PLANNED
+        uses: EndBug/project-fields@v2.1.0
+        with:
+          github_token: ${{ secrets.PROJECT_TOKEN }}
+          project_url: ${{ secrets.PROJECT_URL }}
+          operation: set
+          fields: Status
+          values: PLANNED

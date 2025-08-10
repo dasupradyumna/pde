@@ -1,0 +1,34 @@
+name: Close Stale Issues
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Daily @ 00:00 UTC | 05:30 IST
+
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: 28
+          days-before-pr-stale: 14
+          days-before-close: 7
+          stale-issue-label: stale
+          stale-pr-label: stale
+          stale-issue-message: >
+            This issue has been marked as stale due to being inactive for 4 weeks.
+            It will be closed in 7 days if no further activity occurs.
+          close-issue-message: >
+            This issue has been closed due to being inactive for 5 weeks.
+          stale-pr-message: >
+            This pull request has been marked as stale due to being inactive for 2 weeks.
+            It will be closed in 7 days if no further activity occurs.
+          close-pr-message: >
+            This pull request has been closed due to being inactive for 3 weeks.
+          exempt-issue-labels: <impl>
+          exempt-pr-labels: <impl>
+          operations-per-run: 200
+          remove-stale-when-updated: true
