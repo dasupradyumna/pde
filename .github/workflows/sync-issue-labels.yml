@@ -10,36 +10,18 @@ permissions:
 
 env:
   LABELS: |
-    - name: <impl>
-      color: 551199
-      description: Track internal project development
     - name: bug
       color: 551111
       description: Unexpected and undesired behavior
     - name: chore
       color: 555533
       description: Refactoring and maintenance tasks
-    - name: copy
-      color: 555555
-      description: Problem already noted in another item
     - name: doc
       color: 333399
       description: Enhance existing documentation
     - name: feat
       color: 447744
       description: New feature request or enhancement
-    - name: help-wanted
-      color: 335555
-      description: Open to contribution from users
-    - name: not-planned
-      color: 000000
-      description: Not planned and will not be worked on
-    - name: stale
-      color: 555555
-      description: Closed due to insufficient activity
-    - name: waiting
-      color: 994422
-      description: Waiting for feedback from author
 
 jobs:
   sync-labels:
