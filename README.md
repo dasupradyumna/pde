@@ -1,9 +1,13 @@
-# TEMPLATE Repository
+# Personal Development Environment
 
-First steps after creating a repository using this template:
+This repository contains the installation script, configurations and dot files for all the software
+tools that form my personal development environment. This environment comprises mainly of command
+line utilities and terminal-based tools, trying to emulate the Unix philosophy.
 
-- Create a new project by cloning the template
-- Add repository secrets for project workflows
-    1. PROJECT_TOKEN - Personal Access Token
-    2. PROJECT_URL - GitHub Project URL
-- Update the repository name from TEMPLATE in .github/ISSUE_TEMPLATE folder
+## Components (Planned)
+
+- Instllation Script
+- Version Locked Tools
+- WezTerm Terminal
+- Bash Shell
+- Neovim Editor
