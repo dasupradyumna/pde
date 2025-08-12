@@ -8,9 +8,6 @@ on:
 permissions:
   pull-requests: read
 
-env:
-  PROJECT_OWNER: dasupradyumna
-
 jobs:
 
   handle-open:
@@ -24,16 +21,16 @@ jobs:
         uses: actions/add-to-project@v1.0.2
         with:
           github-token: ${{ secrets.PROJECT_TOKEN }}
-          project-url: ${{ secrets.PROJECT_URL }}
+          project-url: ${{ vars.PROJECT_URL }}
 
       - name: User -> EVALUATE | Owner -> ONGOING
         uses: EndBug/project-fields@v2.1.0
         with:
           github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ secrets.PROJECT_URL }}
+          project_url: ${{ vars.PROJECT_URL }}
           operation: set
           fields: Status
-          values: ${{ github.actor == env.PROJECT_OWNER && 'ONGOING' || 'EVALUATE' }}
+          values: ${{ github.actor == vars.PROJECT_OWNER && 'ONGOING' || 'EVALUATE' }}
 
   handle-close:
     name: Handle Closed PRs
@@ -45,7 +42,7 @@ jobs:
         uses: EndBug/project-fields@v2.1.0
         with:
           github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ secrets.PROJECT_URL }}
+          project_url: ${{ vars.PROJECT_URL }}
           operation: set
           fields: Status
           values: ${{ github.event.pull_request.merged == true && 'COMPLETED' || 'DISCARDED' }}
@@ -54,7 +51,7 @@ jobs:
         uses: EndBug/project-fields@v2.1.0
         with:
           github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ secrets.PROJECT_URL }}
+          project_url: ${{ vars.PROJECT_URL }}
           operation: clear
           fields: Start,End
 
@@ -68,7 +65,7 @@ jobs:
         uses: EndBug/project-fields@v2.1.0
         with:
           github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ secrets.PROJECT_URL }}
+          project_url: ${{ vars.PROJECT_URL }}
           operation: set
           fields: Status
           values: PLANNED

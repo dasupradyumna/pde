@@ -1,0 +1,84 @@
+name: Create PR Link
+run-name: "Create PR Link - Issue #${{ github.event.issue.number }}"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+
+  create-pr-link:
+    runs-on: ubuntu-latest
+    if: >
+      github.actor == vars.PROJECT_OWNER &&
+      (
+        startsWith(github.event.issue.title, '[HOTFIX]') ||
+        startsWith(github.event.issue.title, '[RELEASE]')
+      )
+
+    steps:
+      - name: Get Source Branch
+        id: branch
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const title = context.payload.issue.title;
+
+            let sourceBranch;
+            if (title.startsWith("[HOTFIX]")) {
+              const slug = title
+                .replace("[HOTFIX]", "")
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
+              sourceBranch = `hotfix/${slug}`;
+            } else if (title.startsWith("[RELEASE]")) {
+              sourceBranch = "develop";
+            }
+
+            const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });
+            const sha = mainRef.data.object.sha;
+
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: `heads/${sourceBranch}` });
+              console.log(`Branch '${sourceBranch}' already exists. Skipping creation.`);
+            } catch (err) {
+              if (err.status !== 404)  throw err;
+              console.log(`Branch '${sourceBranch}' does not exist. Creating it...`);
+              await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${sourceBranch}`, sha });
+            }
+
+            core.setOutput("source", sourceBranch);
+
+      - name: Comment 'Create PR' link
+        uses: actions/github-script@v7
+        env:
+          SOURCE_BRANCH: ${{ steps.branch.outputs.source }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const issue = context.payload.issue;
+            const title = issue.title;
+            const issue_number = issue.number;
+            const milestone = encodeURIComponent(issue.milestone?.title || '');
+            const source = encodeURIComponent(process.env.SOURCE_BRANCH);
+
+            let url = `https://github.com/${owner}/${repo}/compare/main...${source}?quick_pull=1&assignees=${owner}`;
+            if (milestone) url += `&milestone=${milestone}`;
+
+            if (title.startsWith('[RELEASE]')) {
+              url += `&title=${encodeURIComponent(title)}&labels=feat&template=release.md`;
+            } else if (title.startsWith('[HOTFIX]')) {
+              url += `&title=${encodeURIComponent(title)}&labels=bug&template=hotfix.md`;
+            }
+
+            const body = `[Create PR](${url}) : ${process.env.SOURCE_BRANCH} -> main`;
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
