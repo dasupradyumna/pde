@@ -1,0 +1,27 @@
+######################################### GIT CONFIGURATION ########################################
+# Reference: https://git-scm.com/docs/git-config
+
+[alias]
+    root-dir = rev-parse --show-toplevel
+    ; cd-root = !cd "$(git root-dir)"
+
+[commit]
+    gpgsign = true
+
+[gpg]
+    format = ssh
+
+[help]
+    autocorrect = prompt
+
+[init]
+    defaultBranch = main
+
+[status]
+    renames = copy
+
+[user]
+    name = Dasu Pradyumna
+    signingkey = ~/.ssh/git_sign.pub
+
+# ex: ft=gitconfig
