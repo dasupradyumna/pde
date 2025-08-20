@@ -11,11 +11,11 @@
 [gpg]
     format = ssh
 
-[help]
-    autocorrect = prompt
-
 [init]
     defaultBranch = main
+
+[log]
+    date = format:%a %d %b %y %H:%M
 
 [status]
     renames = copy

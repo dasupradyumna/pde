@@ -1,0 +1,261 @@
+################################### LAZYGIT CONFIGURATION ##########################################
+# Reference: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
+
+###################### USER INTERFACE ######################
+gui:
+  # Scrolling
+  scrollHeight: 3
+  scrollPastBottom: false
+  scrollOffMargin: 4
+  mouseEvents: false
+
+  # Warnings
+  skipAmendWarning: true
+  skipDiscardChangeWarning: false
+  skipNoStagedFilesWarning: true
+  skipRewordInEditorWarning: true
+
+  # Panels
+  expandFocusedSidePanel: true
+  expandedSidePanelWeight: 10
+  mainPanelSplitMode: horizontal
+
+  # Theme
+  theme:
+    activeBorderColor: [blue, bold]
+    inactiveBorderColor: ['#666677']
+    searchingActiveBorderColor: [magenta]
+    optionsTextColor: [black, bold]
+    selectedLineBgColor: ['#012749', none]
+    inactiveViewSelectedLineBgColor: [bold]
+    cherryPickedCommitFgColor: [blue, bold]
+    cherryPickedCommitBgColor: []
+
+  # UI Elements
+  showListFooter: false
+  showNumstatInFilesView: true
+  showCommandLog: false
+  showPanelJumps: false
+  nerdFontsVersion: 3
+  commitAuthorLongLength: 20
+  showDivergenceFromBaseBranch: arrowAndNumber
+  filterMode: fuzzy
+  spinner:
+    frames: ['|', /, ─, \]
+    rate: 150
+  statusPanelView: allBranchesLog
+
+##################### BEHAVIOR OPTIONS #####################
+
+disableStartupPopups: true
+notARepository: skip
+promptToReturnFromSubprocess: false # NOTE: enable this for debugging if some action is failing
+
+# customCommands: []
+
+# os:
+#   edit: nvim '{{filename}}' # TODO: support neovim as editor
+#   shellFunctionsFile: alias.sh # TODO: add the correct alias file
+
+# services: {}
+
+update:
+  method: never
+
+######################## GIT OPTIONS #######################
+git:
+  # paging:  TODO: support delta here
+
+  mainBranches: [master, main, develop]
+  autoFetch: false
+  autoForwardBranches: allBranches
+  branchLogCmd: |
+    bash -c "git log --color=always --graph --abbrev=8 \\
+        --pretty=format:'%C(yellow)%h%Creset ∙ %C(magenta)%an %C(brightmagenta)(%ae)%Creset ∙ %C(bold)%C(
+        blue)%ad%C(auto)%n%n%-(decorate:prefix=    >>> ,suffix=,separator= ∙ ,pointer= ∙ ,tag=)%n%n  %C(
+        bold)%s%Creset%n%w(0,2,2)%+b' {{branchName}} --"
+  allBranchesLogCmds:
+    - bash -c "git log --color=always --graph --abbrev=8
+        --pretty=format:'%C(yellow)%h%Creset ∙ %C(magenta)%an %C(brightmagenta)(%ae)%Creset ∙ %C(bold)%C(
+        blue)%ad%C(auto)%n%n%-(decorate:prefix=    >>> ,suffix=,separator= ∙ ,pointer= ∙ ,tag=)%n%n  %C(
+        bold)%s%Creset%n%w(0,2,2)%+b' --all"
+        # FIX: this affects even non-graph characters
+        # | sed -e 's;\*;◯;g' -e 's;|;│;g' -e 's;/;╱;g' -e 's;\\\\;╲;g'"
+  branchPrefix: feat/
+
+  overrideGpg: true # HACK: to reword commits (even though GPG is not used)
+  localBranchSortOrder: recency
+  truncateCopiedCommitHashesTo: 40
+  log:
+    showGraph: when-maximised
+
+######################## KEYBINDINGS #######################
+keybinding:
+  universal:
+    quit: q
+    quit-alt1: <disabled>
+    suspendApp: <disabled>
+    return: <C-C>
+    quitWithoutChangingDirectory: Q
+    togglePanel: <Tab>
+    prevItem: k
+    nextItem: j
+    prevItem-alt: <disabled>
+    nextItem-alt: <disabled>
+    prevPage: <C-B>
+    nextPage: <C-F>
+    scrollLeft: H
+    scrollRight: L
+    goToTop: K # BUG: these 2 seem hard-coded to > & <
+    goToBottom: J
+    goToTop-alt: <disabled>
+    goToBottom-alt: <disabled>
+    toggleRangeSelect: v
+    rangeSelectUp: <disabled>
+    rangeSelectDown: <disabled>
+    prevBlock: h
+    nextBlock: l
+    prevBlock-alt: <disabled>
+    nextBlock-alt: <disabled>
+    prevBlock-alt2: <disabled>
+    nextBlock-alt2: <disabled>
+    jumpToBlock: [1, 2, 3, 4, 5]
+    focusMainView: 0
+    nextMatch: n
+    prevMatch: N
+    startSearch: /
+    optionMenu: <C-O>
+    optionMenu-alt: '?'
+    select: <Space>
+    goInto: <Enter>
+    confirm: <Enter>
+    confirmInEditor: <C-S>
+    confirmInEditor-alt: <disabled>
+    remove: d
+    new: n
+    edit: e # opens editor
+    openFile: o # xdg-open
+    scrollUpMain: <C-U>
+    scrollDownMain: <C-D>
+    scrollUpMain-alt1: <disabled>
+    scrollDownMain-alt1: <disabled>
+    scrollUpMain-alt2: <disabled>
+    scrollDownMain-alt2: <disabled>
+    executeShellCommand: ':'
+    createRebaseOptionsMenu: <disabled>
+    pushFiles: p
+    pullFiles: P
+    refresh: R
+    createPatchOptionsMenu: <disabled>
+    nextTab: )
+    prevTab: (
+    nextScreenMode: +
+    prevScreenMode: _
+    undo: u
+    redo: U
+    filteringMenu: <disabled>
+    diffingMenu: <disabled>
+    diffingMenu-alt: <disabled>
+    copyToClipboard: y
+    openRecentRepos: <C-R>
+    submitEditorText: <Enter>
+    extrasMenu: '@'
+    toggleWhitespaceInDiffView: <C-W>
+    increaseContextInDiffView: ']'
+    decreaseContextInDiffView: '['
+    increaseRenameSimilarityThreshold: <disabled>
+    decreaseRenameSimilarityThreshold: <disabled>
+    openDiffTool: <disabled>
+
+  main:
+    toggleSelectHunk: <C-S>
+    pickBothHunks: b
+    editSelectHunk: E
+
+  status:
+    checkForUpdate: u
+    recentRepos: <disabled>
+    allBranchesLogGraph: <disabled>
+
+  files:
+    commitChanges: c
+    commitChangesWithoutHook: <disabled>
+    amendLastCommit: a
+    commitChangesWithEditor: <disabled>
+    findBaseCommitForFixup: <disabled>
+    confirmDiscard: y
+    ignoreFile: i
+    refreshFiles: r
+    stashAllChanges: <disabled>
+    viewStashOptions: s
+    toggleStagedAll: S
+    viewResetOptions: D
+    fetch: f
+    toggleTreeView: <disabled>
+    openMergeTool: <disabled> # CHECK: merge tool needed? can resolve conflicts in lazygit
+    openStatusFilter: <C-S>
+    copyFileInfoToClipboard: Y
+    collapseAll: '{'
+    expandAll: '}'
+  commitMessage:
+    commitMenu: <C-O>
+  worktrees:
+    viewWorktreeOptions: <disabled>
+  submodules:
+    init: i
+    update: u
+    bulkMenu: b
+
+  branches:
+    createPullRequest: o
+    viewPullRequestOptions: O
+    copyPullRequestURL: Y
+    checkoutBranchByName: c
+    forceCheckoutBranch: <disabled>
+    checkoutPreviousBranch: '-'
+    rebaseBranch: R
+    renameBranch: r
+    mergeIntoCurrentBranch: m
+    moveCommitsToNewBranch: N
+    viewGitFlowOptions: <disabled>
+    fastForward: <disabled>
+    createTag: t
+    pushTag: T
+    setUpstream: u
+    fetchRemote: f
+    sortOrder: s
+
+  commits:
+    squashDown: s
+    renameCommit: r
+    renameCommitWithEditor: <disabled>
+    viewResetOptions: R
+    markCommitAsFixup: f
+    createFixupCommit: F
+    squashAboveCommits: S
+    moveDownCommit: <C-J>
+    moveUpCommit: <C-K>
+    amendToCommit: a
+    resetCommitAuthor: A
+    pickCommit: p
+    revertCommit: D
+    cherryPickCopy: c
+    pasteCommits: V
+    markCommitAsBaseForRebase: B
+    tagCommit: t
+    checkoutCommit: <Space>
+    resetCherryPick: <disabled>
+    copyCommitAttributeToClipboard: Y
+    openLogMenu: <C-L>
+    openInBrowser: o
+    viewBisectOptions: <disabled>
+    startInteractiveRebase: i
+    selectCommitsOfCurrentBranch: '*'
+
+# XXX: Where are these even used??
+#   commitFiles:
+#   amendAttribute:
+
+  stash:
+    popStash: p
+    renameStash: r
