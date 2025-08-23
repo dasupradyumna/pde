@@ -7,7 +7,7 @@ gui:
   scrollHeight: 3
   scrollPastBottom: false
   scrollOffMargin: 4
-  mouseEvents: false
+  mouseEvents: true
 
   # Warnings
   skipAmendWarning: true
@@ -16,6 +16,7 @@ gui:
   skipRewordInEditorWarning: true
 
   # Panels
+  sidePanelWidth: 0.2
   expandFocusedSidePanel: true
   expandedSidePanelWeight: 10
   mainPanelSplitMode: horizontal
@@ -64,7 +65,9 @@ update:
 
 ######################## GIT OPTIONS #######################
 git:
-  # paging:  TODO: support delta here
+  paging:
+    colorArg: always
+    pager: delta --paging=never
 
   mainBranches: [master, main, develop]
   autoFetch: false

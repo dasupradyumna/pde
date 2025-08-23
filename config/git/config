@@ -8,8 +8,14 @@
 [commit]
     gpgsign = true
 
+[core]
+    hooksPath = ~/.config/git/hooks
+
 [gpg]
     format = ssh
+
+[include]
+    path = ../../delta/config
 
 [init]
     defaultBranch = main
