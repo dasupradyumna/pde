@@ -5,7 +5,10 @@
 interrupt_handler() { log -e "[SIGINT] User aborted the script!"; exit 130; }
 
 # Handle SIGEXIT - clean up and propagate exit code
-exit_handler() { code=$?; tput cnorm; rm -rf "$TMPDIR"; exit $code; }
+exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
+
+# Get absolute path of a file
+abspath() { echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; }
 
 # Log a message based on severity; only one severity must be specified
 #
