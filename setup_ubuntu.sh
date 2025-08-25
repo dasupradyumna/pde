@@ -55,12 +55,7 @@ ensure_dependencies() {
     local installed latest skip_install=true
     for dep in "${DEPS[@]}"; do
         read -r installed latest < <(apt_pkg_versions "$dep")
-        if [ "$installed" = "$latest" ]; then
-            log -i "Checking '$dep': Already latest - $installed"
-        else
-            log -w "Checking '$dep': Installed $installed >> Latest $latest"
-            skip_install=false
-        fi
+        if ! is_latest_installed "$dep" "$installed" "$latest"; then skip_install=false; fi
     done
 
     # Skip installation if dependencies are already up-to-date
@@ -71,6 +66,20 @@ ensure_dependencies() {
     exec_ring_log $SUDO apt-get install -y bash-completion build-essential curl \
         software-properties-common
     log -i 'Installed common dependencies'
+}
+
+# Copy tool configs to their appropriate locations
+# TODO: Support global configs as well, when OPT__SYSTEM_INSTALL is true
+# CHECK: If paths in git config are valid for system install
+copy_configs() {
+    echo && log -i 'Installing configs ...'
+    mkdir -p "$HOME/.config"
+    local -a tools=(delta git lazygit)
+
+    for tool in "${tools[@]}"; do
+        ln -sfT "$PWD/config/$tool" "$HOME/.config/$tool"
+        log -i "Linked: $PWD/config/$tool -> $HOME/.config/$tool"
+    done
 }
 
 main() {
@@ -84,6 +93,12 @@ main() {
 
     ensure_dependencies
     setup_git
+
+    copy_configs
+
+    # NOTE: this should be part of the bash environment ; ensures 256 color support
+    #       Only add an export if the variable is not already set
+    echo 'export TERM=xterm-256color COLORTERM=truecolor' >> "$HOME/.bashrc"
 }
 
 main $@

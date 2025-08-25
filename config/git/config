@@ -15,7 +15,7 @@
     format = ssh
 
 [include]
-    path = ../../delta/config
+    path = ~/.config/delta/config
 
 [init]
     defaultBranch = main

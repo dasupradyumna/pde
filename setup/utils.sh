@@ -15,6 +15,21 @@ apt_pkg_versions() {
     apt-cache policy "$1" | awk '/Installed:/ {i=$2} /Candidate:/ {c=$2} END {print i, c}'
 }
 
+# Check if a package is already up-to-date
+is_latest_installed() {
+    local -r pkg="$1" installed="$2" latest="$3"
+    if [ "$installed" = "$latest" ]; then
+        log -i "Latest '$pkg': $installed"
+        return 0
+    elif [ "$installed" = '(none)' ]; then
+        log -w "Install '$pkg': $latest"
+        return 1
+    else
+        log -w "Update '$pkg': $installed >> $latest"
+        return 1
+    fi
+}
+
 # Log a message based on severity; only one severity must be specified
 #
 # Usage: log [-W] [-e|-i|-w] <message>

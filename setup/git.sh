@@ -3,6 +3,13 @@
 
 setup_git() {
     __install_git
+    # Needs to be checked manually, since post-checkout hook may not be set up yet
+    if ! git config get --local user.email &> /dev/null; then
+        local -r user_email='dasupradyumna@gmail.com'
+        git config set --local user.email "$user_email"
+        log -i "User email for this repository set: '$user_email'"
+    fi
+
     __install_lazygit
     __install_delta
 }
@@ -22,12 +29,7 @@ __install_git() {
     # Check if Git is already up-to-date
     local installed latest
     read -r installed latest < <(apt_pkg_versions git)
-    if [ "$installed" = "$latest" ]; then
-        log -i "Checking 'git': Already latest - $(git --version)"
-        return
-    else
-        log -w "Checking 'git': Installed $installed >> Latest $latest"
-    fi
+    if is_latest_installed 'git' "$installed" "$latest"; then return; fi
 
     # Install Git
     exec_ring_log $SUDO apt-get install -y "git=$latest"
@@ -40,16 +42,11 @@ __install_lazygit() {
     local -r ver='0.54.2'
 
     # Check if LazyGit is already installed
+    local curr_ver='(none)'
     if [ -f "$INSTALL_DIR/bin/lazygit" ]; then
-        local curr_ver=$(lazygit -v | awk -F'version=' '{print $2}' | awk -F',' '{print $1}')
-        # TODO: make this more DRY - this version check logic is duplicated in 3 places
-        if [ "$curr_ver" = "$ver" ]; then
-            log -i "Checking 'lazygit': Already latest - $curr_ver"
-            return
-        else
-            log -w "Checking 'lazygit': Installed $curr_ver >> Latest $ver"
-        fi
+        curr_ver=$(lazygit -v | awk -F'version=' '{print $2}' | awk -F',' '{print $1}')
     fi
+    if is_latest_installed 'lazygit' "$curr_ver" "$ver"; then return; fi
 
     # Download LazyGit tarball
     cd "$TEMP_DIR"
@@ -71,15 +68,11 @@ __install_delta() {
     local -r ver='0.18.2'
 
     # Check if Delta is already installed
+    local curr_ver='(none)'
     if [ -f "$INSTALL_DIR/bin/delta" ]; then
-        local curr_ver=$( delta --version | awk '{print$2}')
-        if [ "$curr_ver" = "$ver" ]; then
-            log -i "Checking 'delta': Already latest - $curr_ver"
-            return
-        else
-            log -w "Checking 'delta': Installed $curr_ver >> Latest $ver"
-        fi
+        curr_ver=$( delta --version | awk '{print$2}')
     fi
+    if is_latest_installed 'delta' "$curr_ver" "$ver"; then return; fi
 
     # Download Delta tarball
     cd "$TEMP_DIR"
