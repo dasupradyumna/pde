@@ -1,17 +1,32 @@
 ######################################### SETUP GIT TOOLKIT ########################################
 # Handles installation and removal of git, lazygit and delta
 
+# Execute installation or uninstallation logic based on command-line options
 setup_git() {
-    __install_git
-    # Needs to be checked manually, since post-checkout hook may not be set up yet
-    if ! git config get --local user.email &> /dev/null; then
-        local -r user_email='dasupradyumna@gmail.com'
-        git config set --local user.email "$user_email"
-        log -i "User email for this repository set: '$user_email'"
-    fi
+    if $OPT__UNINSTALL; then
+        echo && log -i 'Uninstalling git toolkit ...'
 
-    __install_lazygit
-    __install_delta
+        exec_ring_log $SUDO add-apt-repository -y --remove ppa:git-core/ppa
+        log -i 'Removed git PPA repository from APT sources'
+
+        exec_ring_log $SUDO apt-get remove -y git
+        exec_ring_log $SUDO apt-get autoremove -y
+        exec_ring_log $SUDO apt-get install -y git
+        log -i "Downgraded to $(git --version)"
+
+        $SUDO rm "$INSTALL_DIR/bin/lazygit" "$INSTALL_DIR/bin/delta" 1>/dev/null
+        log -i 'Uninstalled LazyGit and Delta binaries'
+    else
+        __install_git
+        # Needs to be checked manually, since post-checkout hook may not be set up yet
+        if ! git config get --local user.email &> /dev/null; then
+            local -r user_email='dasupradyumna@gmail.com'
+            git config set --local user.email "$user_email"
+            log -i "User email for this repository set: '$user_email'"
+        fi
+        __install_lazygit
+        __install_delta
+    fi
 }
 
 # Install Git if missing or not already up-to-date

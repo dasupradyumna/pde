@@ -10,14 +10,16 @@ INSTALL_DIR="$HOME/.local"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
 
-OPT__SYSTEM_INSTALL=false
+OPT__SYSTEM_TARGET=false
+OPT__UNINSTALL=false
 
 # Show help message and exit the script, with optional exit code
 show_help() {
     echo '
-Usage: ./setup_ubuntu.sh [-hs]
+Usage: ./setup_ubuntu.sh [-hsU]
     -h : Show this help message
-    -s : System install (/usr/local); if not set, fallback to user install (~/.local)
+    -s : System scope (/usr/local); if not set, fallback to user scope (~/.local)
+    -U : Uninstall programs and configs
 '
     exit $1
 }
@@ -25,10 +27,11 @@ Usage: ./setup_ubuntu.sh [-hs]
 # Parse command-line options
 parse_opts() {
     # Modify variables based on options
-    OPTIND=1; while getopts ':hs' option; do
+    OPTIND=1; while getopts ':hsU' option; do
         case "$option" in
             h) show_help 0 ;;
-            s) OPT__SYSTEM_INSTALL=true; INSTALL_DIR=/usr/local ;;
+            s) OPT__SYSTEM_TARGET=true; INSTALL_DIR=/usr/local ;;
+            U) OPT__UNINSTALL=true ;;
             \?) log -e "Invalid command-line option '-$OPTARG'!"; show_help 1 ;;
             :) log -e "Command-line option '-$OPTARG' requires an argument!"; show_help 1 ;;
         esac
@@ -43,11 +46,14 @@ parse_opts() {
     fi
 
     log -i "Parsing command-line options ...
-    - System Install: $OPT__SYSTEM_INSTALL"
+    - System Scope: $OPT__SYSTEM_TARGET
+    - Uninstall: $OPT__UNINSTALL"
 }
 
 # Check if dependencies are already up-to-date, and install them if otherwise
 ensure_dependencies() {
+    if $OPT__UNINSTALL; then return; fi
+
     local -ra DEPS=('bash-completion' 'build-essential' 'curl' 'software-properties-common')
     echo && log -i 'Ensuring common dependencies are installed ...'
 
@@ -69,16 +75,26 @@ ensure_dependencies() {
 }
 
 # Copy tool configs to their appropriate locations
-# TODO: Support global configs as well, when OPT__SYSTEM_INSTALL is true
+# TODO: Support global configs as well, when OPT__SYSTEM_TARGET is true
 # CHECK: If paths in git config are valid for system install
 copy_configs() {
-    echo && log -i 'Installing configs ...'
-    mkdir -p "$HOME/.config"
     local -a tools=(delta git lazygit)
 
+    if $OPT__UNINSTALL; then
+        echo && log -i 'Uninstalling configs ...'
+    else
+        echo && log -i 'Installing configs ...'
+        mkdir -p "$HOME/.config"
+    fi
+
     for tool in "${tools[@]}"; do
-        ln -sfT "$PWD/config/$tool" "$HOME/.config/$tool"
-        log -i "Linked: $PWD/config/$tool -> $HOME/.config/$tool"
+        if $OPT__UNINSTALL; then
+            rm -rf "$HOME/.config/$tool"
+            log -i "Removed: $HOME/.config/$tool"
+        else
+            ln -sfT "$PWD/config/$tool" "$HOME/.config/$tool"
+            log -i "Linked: $PWD/config/$tool -> $HOME/.config/$tool"
+        fi
     done
 }
 
