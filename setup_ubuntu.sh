@@ -52,16 +52,14 @@ ensure_dependencies() {
     echo && log -i 'Ensuring common dependencies are installed ...'
 
     # Check if dependencies are already up-to-date
-    local installed candidate skip_install=true
+    local installed latest skip_install=true
     for dep in "${DEPS[@]}"; do
-        read -r installed candidate < <(apt-cache policy "$dep" | \
-            awk '/Installed:/ {i=$2} /Candidate:/ {c=$2} END {print i, c}')
-
-        if [ "$installed" != "$candidate" ]; then
-            log -w "Checking '$dep': Installed $installed >> Latest $candidate"
-            skip_install=false
-        else
+        read -r installed latest < <(apt_pkg_versions "$dep")
+        if [ "$installed" = "$latest" ]; then
             log -i "Checking '$dep': Already latest - $installed"
+        else
+            log -w "Checking '$dep': Installed $installed >> Latest $latest"
+            skip_install=false
         fi
     done
 

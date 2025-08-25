@@ -10,6 +10,11 @@ exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
 # Get absolute path of a file
 abspath() { echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; }
 
+# Get installed and latest versions of a package
+apt_pkg_versions() {
+    apt-cache policy "$1" | awk '/Installed:/ {i=$2} /Candidate:/ {c=$2} END {print i, c}'
+}
+
 # Log a message based on severity; only one severity must be specified
 #
 # Usage: log [-W] [-e|-i|-w] <message>
