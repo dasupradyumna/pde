@@ -11,11 +11,15 @@ exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
 abspath() { echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; }
 
 # Get installed and latest versions of a package
+#
+# Usage: apt_pkg_versions <package_name>
 apt_pkg_versions() {
     apt-cache policy "$1" | awk '/Installed:/ {i=$2} /Candidate:/ {c=$2} END {print i, c}'
 }
 
 # Check if a package is already up-to-date
+#
+# Usage: is_latest_installed <package_name> <installed_version> <latest_version>
 is_latest_installed() {
     local -r pkg="$1" installed="$2" latest="$3"
     if [ "$installed" = "$latest" ]; then

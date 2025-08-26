@@ -5,10 +5,10 @@
 # Source all setup modules
 for module in setup/*.sh; do source "$module"; done
 
-# UBUNTU_ver="$(source /etc/os-release && echo $ver_ID)"
 INSTALL_DIR="$HOME/.local"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
+declare -A TOOL_VERSIONS=()
 
 OPT__SYSTEM_TARGET=false
 OPT__UNINSTALL=false
@@ -48,6 +48,19 @@ parse_opts() {
     log -i "Parsing command-line options ...
     - System Scope: $OPT__SYSTEM_TARGET
     - Uninstall: $OPT__UNINSTALL"
+}
+
+# Load tool versions from version.lock file
+load_version_lock() {
+    if $OPT__UNINSTALL; then return; fi
+
+    while read -r tool version; do
+        if [ -z "$tool" ] || [ -z "$version" ] || [ "${tool:0:1}" == '#' ]; then continue; fi
+
+        TOOL_VERSIONS["$tool"]="$version"
+    done < "$PWD/version.lock"
+
+    log -i 'Loaded tool versions from version.lock'
 }
 
 # Check if dependencies are already up-to-date, and install them if otherwise
@@ -106,6 +119,7 @@ main() {
     mkdir "$TEMP_DIR"
 
     parse_opts $@
+    load_version_lock
 
     ensure_dependencies
     setup_git
