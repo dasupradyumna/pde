@@ -232,7 +232,7 @@ keybinding:
     squashDown: s
     renameCommit: r
     renameCommitWithEditor: <disabled>
-    viewResetOptions: R
+    viewResetOptions: D
     markCommitAsFixup: f
     createFixupCommit: F
     squashAboveCommits: S
@@ -241,7 +241,7 @@ keybinding:
     amendToCommit: a
     resetCommitAuthor: A
     pickCommit: p
-    revertCommit: D
+    revertCommit: R
     cherryPickCopy: c
     pasteCommits: V
     markCommitAsBaseForRebase: B
