@@ -1,0 +1,41 @@
+###################################### READLINE CONFIGURATION ######################################
+
+# Variables
+set bind-tty-special-chars off
+set blink-matching-paren
+set colored-stats
+set completion-ignore-case
+set editing-mode vi
+set history-size 500
+set mark-symlinked-directories
+set menu-complete-display-prefix
+set print-completions-horizontally
+set revert-all-at-newline
+set show-mode-in-prompt
+set skip-completed-text
+set vi-cmd-mode-string \1\e[31m\2[CMD] \1\e[0m\2
+set vi-ins-mode-string
+set visible-stats
+
+# Keybindings
+set keymap vi-insert
+"\C-L": clear-screen
+"\C-M": accept-line
+"\C-P": previous-history
+"\C-N": next-history
+"\C-F": forward-search-history
+"\C-B": reverse-search-history
+"\C-V": quoted-insert
+"\C-W": backward-kill-word
+"\C-U": kill-whole-line
+"\C-Q": abort
+"\C-E": edit-and-execute-command
+"\C-X": possible-completions
+"\t": menu-complete
+"\e[Z": menu-complete-backward
+"\C-S": vi-movement-mode
+set keymap vi-command
+"\C-U": upcase-word
+"\C-D": downcase-word
+"u": vi-undo
+"\C-R": vi-redo
