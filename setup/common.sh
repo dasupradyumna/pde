@@ -37,6 +37,11 @@ ensure_dependencies() {
     log -i 'Installed common dependencies'
 }
 
+declare -r BASHRC_ENTRYPOINT="
+# >>> PDE-ENTRYPOINT >>>
+source $PWD/config/bash/init.sh
+# <<< PDE-ENTRYPOINT <<<"
+
 # Manage tool configs - install or uninstall based on flags
 # TODO: Support global configs as well, when OPT__SYSTEM_SCOPE is true
 # CHECK: If paths in git config are valid for system install
@@ -60,4 +65,14 @@ manage_configs() {
         fi
     done
 
+    # Manage bash entry point
+    if $OPT__UNINSTALL; then
+        sed -i '/^# >>> PDE-ENTRYPOINT >>>$/,/^# <<< PDE-ENTRYPOINT <<<$/d' "$HOME/.bashrc"
+        sed -i '/^$/N;/^\n$/D' "$HOME/.bashrc" # Squash consecutive empty lines
+        sed -i '${/^$/d}' "$HOME/.bashrc" # Delete last line if empty
+        log -i 'Removed PDE bash entry point from .bashrc'
+    elif ! grep -q ">>> PDE-ENTRYPOINT >>>" "$HOME/.bashrc"; then
+        echo "$BASHRC_ENTRYPOINT" >> "$HOME/.bashrc"
+        log -i 'Added PDE bash entry point to ~/.bashrc'
+    fi
 }

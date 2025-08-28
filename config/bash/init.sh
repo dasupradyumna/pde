@@ -13,10 +13,14 @@ set +o histexpand
 shopt -s checkhash checkjobs dirspell failglob hostcomplete huponexit progcomp_alias shift_verbose
 
 # Source all custom bash modules
-for module in ./*.sh; do source "$module"; done
+for module in "$(dirname -- "${BASH_SOURCE[0]}")"/*.sh; do source "$module"; done
 
 # Set environment variables
-# TERM, COLORTERM, FIGNORE, LS_COLORS
+# FIGNORE, LS_COLORS
+
+# Ensures terminal supports 256 colors + truecolor
+[ "$TERM" != "xterm-256color" ] && export TERM=xterm-256color
+[ "$COLORTERM" != "truecolor" ] && export COLORTERM=truecolor
 
 # Ensures all readline programs use custom inputrc
 export INPUTRC="$(dirname -- "${BASH_SOURCE[0]}")/inputrc"

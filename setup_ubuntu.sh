@@ -72,10 +72,6 @@ main() {
     manage_git
 
     manage_configs
-
-    # NOTE: this should be part of the bash environment ; ensures 256 color support
-    #       Only add an export if the variable is not already set
-    echo 'export TERM=xterm-256color COLORTERM=truecolor' >> "$HOME/.bashrc"
 }
 
 main $@

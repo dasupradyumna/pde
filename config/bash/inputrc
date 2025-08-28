@@ -26,7 +26,6 @@ set keymap vi-insert
 "\C-F": forward-search-history
 "\C-B": reverse-search-history
 "\C-V": quoted-insert
-"\C-W": backward-kill-word
 "\C-U": kill-whole-line
 "\C-Q": abort
 "\C-E": edit-and-execute-command
