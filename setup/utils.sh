@@ -1,15 +1,6 @@
 ########################################## SETUP UTILITIES #########################################
 # Helper functions and utilities for PDE setup
 
-# Handle SIGINT - exit with code 130 = 128 + 2 (SIGINT)
-interrupt_handler() { log -e "[SIGINT] User aborted the script!"; exit 130; }
-
-# Handle SIGEXIT - clean up and propagate exit code
-exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
-
-# Get absolute path of a file
-abspath() { echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; }
-
 # Get installed and latest versions of a package
 #
 # Usage: apt_pkg_versions <package_name>

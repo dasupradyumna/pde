@@ -2,7 +2,7 @@
 # Handles installation and removal of git, lazygit and delta
 
 # Execute installation or uninstallation logic based on command-line options
-setup_git() {
+manage_git() {
     if $OPT__UNINSTALL; then
         echo && log -i 'Uninstalling git toolkit ...'
 
