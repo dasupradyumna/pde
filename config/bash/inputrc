@@ -21,8 +21,6 @@ set visible-stats
 set keymap vi-insert
 "\C-L": clear-screen
 "\C-M": accept-line
-"\C-P": previous-history
-"\C-N": next-history
 "\C-F": forward-search-history
 "\C-B": reverse-search-history
 "\C-V": quoted-insert
@@ -34,7 +32,11 @@ set keymap vi-insert
 "\e[Z": menu-complete-backward
 "\C-S": vi-movement-mode
 set keymap vi-command
+"\C-W":
+"\C-F": forward-search-history
+"\C-B": reverse-search-history
 "\C-U": upcase-word
 "\C-D": downcase-word
 "u": vi-undo
 "\C-R": vi-redo
+"\C-S": vi-insertion-mode

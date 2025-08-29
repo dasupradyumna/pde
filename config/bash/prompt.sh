@@ -1,22 +1,5 @@
 ######################################## BASH COMMAND PROMPT #######################################
 
-# Terminal ANSI color codes
-declare -rA __colors=(
-    # formatting
-    [none]='0'              [bold]='1'              [normal]='22'
-    # normal colors
-    [black]='30'            [red]='31'
-    [green]='32'            [yellow]='33'
-    [blue]='34'             [magenta]='35'
-    [cyan]='36'             [white]='37'
-    # bright colors
-    [brightblack]='90'      [brightred]='91'
-    [brightgreen]='92'      [brightyellow]='93'
-    [brightblue]='94'       [brightmagenta]='95'
-    [brightcyan]='96'       [brightwhite]='97'
-)
-__render() { printf '\1\e[%sm\2' "${__colors["$1"]}"; }
-
 # Save exit status of last command
 export PROMPT_COMMAND='__prompt_last_exit=$?'
 
@@ -87,9 +70,9 @@ __prompt_python_env() {
 # Final prompt terminator, indicating success or failure of last command
 __prompt_terminator() {
     # FIX: neovim terminal start with SHLVL at 2 ; correct this using bash_env file
-    if [ $__prompt_last_exit -eq 0 ]; then __render none; else __render brightred; fi
+    if [ $__prompt_last_exit -eq 0 ]; then __render; else __render brightred; fi
     printf "%$((SHLVL+1))s" + | sed -e 's| ||g' -e 's|+|  |g'
-    __render none
+    __render
 }
 
 ################################ PROMPT STRINGS ################################
@@ -98,8 +81,8 @@ export PS1='
 $(__prompt_job_list)$(__prompt_user_host)$(__prompt_cwd)$(__prompt_dir_stack)$(__prompt_git_head)
 $(__prompt_python_env)$(__prompt_terminator)'
 
-export PS2='  $(__render brightblack)$(__render none)  '
+export PS2='  $(__render brightblack)$(__render)  '
 
-export PS3='$(__render cyan)SELECT$(__render none) '
+export PS3='$(__render cyan)SELECT$(__render) '
 
-export PS4='$(__render green)[TRACE]$(__render none) '
+export PS4='$(__render green)[TRACE]$(__render) '
