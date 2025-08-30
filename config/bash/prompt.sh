@@ -1,4 +1,4 @@
-######################################## BASH COMMAND PROMPT #######################################
+###################################### COMMAND PROMPT STRINGS ######################################
 
 # Save exit status of last command
 export PROMPT_COMMAND='__prompt_last_exit=$?'

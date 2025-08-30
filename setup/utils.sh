@@ -1,5 +1,4 @@
 ########################################## SETUP UTILITIES #########################################
-# Helper functions and utilities for PDE setup
 
 # Get installed and latest versions of a package
 #

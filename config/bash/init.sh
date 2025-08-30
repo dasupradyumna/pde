@@ -7,7 +7,7 @@ PDE_BASH_ENV_LOADED=true
 # Disable flow control - frees up <C-S> & <C-Q>
 stty -ixon
 
-# Builtin Options
+# Builtin options
 set +o braceexpand
 set +o histexpand
 shopt -s checkhash checkjobs dirspell failglob hostcomplete huponexit progcomp_alias shift_verbose

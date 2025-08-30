@@ -1,6 +1,6 @@
 ####################################### ALIASES AND FUNCTIONS ######################################
 
-# Check and synchroize all installed packages, while removing unused ones
+# Check and synchronize all installed packages, while removing unused ones
 alias apt-sync='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
 
 # Directory stack manipulation
@@ -10,12 +10,12 @@ alias drm='popd 1>/dev/null'
 alias dcn='pushd +1 1>/dev/null'
 alias dcp='pushd -0 1>/dev/null'
 
-# Quick launchers
+# Short-hand aliases
 # alias e='nvim' # TODO: when installed
 alias g='lazygit'
 alias v='venv'
 
-# List permissions of filesystem object
+# List permissions of file system object
 alias lmod='stat --printf "    object: %n (%F)\n    perms: (%a) %A\n"'
 
 # Create and enter a directory

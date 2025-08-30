@@ -1,6 +1,5 @@
 #!/bin/bash
 ########################################### UBUNTU SETUP ###########################################
-# Setup all programs required for the PDE in Ubuntu and install their configs appropriately
 
 # Source all setup modules
 for module in setup/*.sh; do source "$module"; done
