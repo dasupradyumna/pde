@@ -102,3 +102,6 @@ __install_delta() {
     cd ..
     log -i "Installed Delta to $INSTALL_DIR/bin"
 }
+
+# TODO: Add installation logic for bat
+#  curl -Lo bat_0.24.0.tar.gz https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-v0.24.0-x86_64-unknown-linux-gnu.tar.gz
