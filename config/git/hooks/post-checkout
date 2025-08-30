@@ -1,0 +1,21 @@
+#!/bin/bash
+# Set user email config based on the current remote after clone
+
+# Ensures this script is run only once for a repository
+if git config get --local user.email &> /dev/null; then exit; fi
+
+# Get repository remote URL
+origin_url="$(git remote get-url origin 2> /dev/null || echo -n)"
+if [ -z "$origin_url" ]; then echo '[HOOK] Repository origin URL not found!'; exit; fi
+
+# Choose user email based on remote
+user_email=''
+case "$origin_url" in
+    *github.com*) user_email='dasupradyumna@gmail.com' ;;
+    *gitlab.com*) user_email='pradyumna.dasu@vimaan.ai' ;;
+    *) echo '[HOOK] Repository origin URL not supported!'; exit ;;
+esac
+
+# Set user.email config
+git config set --local user.email "$user_email"
+echo "[HOOK] User email set to $user_email"

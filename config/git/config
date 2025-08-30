@@ -1,0 +1,33 @@
+######################################### GIT CONFIGURATION ########################################
+# Reference: https://git-scm.com/docs/git-config
+
+[alias]
+    root-dir = rev-parse --show-toplevel
+    ; cd-root = !cd "$(git root-dir)"
+
+[commit]
+    gpgsign = true
+
+[core]
+    hooksPath = ~/.config/git/hooks
+
+[gpg]
+    format = ssh
+
+[include]
+    path = ~/.config/delta/config
+
+[init]
+    defaultBranch = main
+
+[log]
+    date = format:%a %d %b %y %H:%M
+
+[status]
+    renames = copy
+
+[user]
+    name = Dasu Pradyumna
+    signingkey = ~/.ssh/git_sign.pub
+
+# ex: ft=gitconfig

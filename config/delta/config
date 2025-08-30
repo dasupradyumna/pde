@@ -1,0 +1,69 @@
+######################################## DELTA CONFIGURATION #######################################
+# Reference: https://dandavison.github.io/delta/full---help-output.html
+# NOTE: All color values match midnight.nvim
+
+[core]
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[merge]
+    conflictstyle = zdiff3
+
+[delta]
+    blame-format = "{timestamp:<11} ({commit:<8}) {author:<16.16} "
+    blame-separator-format = │ {n:^2.4} │
+    blame-timestamp-output-format = %d %b %Y
+
+    commit-decoration-style = brightblack ul
+
+    file-added-label = [ADDED]
+    file-copied-label = [COPIED]
+    file-modified-label = [CHANGED]
+    file-removed-label = [REMOVED]
+    file-style = cyan
+    file-decoration-style = brightblack ul
+
+    hunk-header-style = omit
+
+    hyperlinks = true
+    hyperlinks-file-link-format = lazygit-edit://{path}:{line}
+
+    line-numbers = true
+    line-numbers-left-format = │ {nm:^2.4} │
+    line-numbers-left-style = brightblack
+    line-numbers-right-format = │ {np:^2.4} │
+    line-numbers-right-style = brightblack
+    line-numbers-minus-style = "#fa4d56"
+    line-numbers-plus-style = "#42be65"
+    line-numbers-zero-style = brightblack
+
+    merge-conflict-begin-symbol = 
+    merge-conflict-end-symbol = 
+    merge-conflict-ours-diff-header-decoration-style = ul ol brightblack
+    merge-conflict-ours-diff-header-style = magenta bold
+    merge-conflict-theirs-diff-header-decoration-style = ul ol brightblack
+    merge-conflict-theirs-diff-header-style = magenta bold
+
+    ; minus-empty-line-marker-style = red # XXX: what does this change?
+    minus-emph-style = "syntax #483700"
+    minus-non-emph-style = "syntax #261d00"
+    minus-style = "syntax #2d0709"
+    ; plus-empty-line-marker-style =
+    plus-emph-style = "syntax #483700"
+    plus-non-emph-style = "syntax #261d00"
+    plus-style = "syntax #04230a"
+    zero-style = syntax black
+    whitespace-error-style = "reverse #aa0022"
+
+    inline-hint-style = magenta
+    max-line-distance = 1
+    navigate = true
+    relative-paths = true
+    right-arrow = >>>
+    side-by-side = true
+    tabs = 4
+    wrap-max-lines = 0
+
+# ex: ft=gitconfig
