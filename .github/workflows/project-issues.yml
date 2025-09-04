@@ -3,40 +3,16 @@ run-name: "Update Project - Issue #${{ github.event.issue.number }}"
 
 on:
   issues:
-    types: [opened, closed, reopened]
+    types: [closed]
 
 permissions:
   issues: read
 
 jobs:
 
-  handle-open:
-    name: Handle New Issues
-    runs-on: ubuntu-latest
-    if: github.event.action == 'opened'
-
-    steps:
-
-      - name: Add New Issue to Project
-        uses: actions/add-to-project@v1.0.2
-        with:
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-          project-url: ${{ vars.PROJECT_URL }}
-
-      - name: User -> EVALUATE | Owner -> PLANNED
-        uses: EndBug/project-fields@v2.1.0
-        with:
-          github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ vars.PROJECT_URL }}
-          operation: set
-          fields: Status
-          values: ${{ github.actor == vars.PROJECT_OWNER && 'PLANNED' || 'EVALUATE' }}
-
   handle-close:
     name: Handle Closed Issues
     runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
-
     steps:
       - name: Update Status to COMPLETED or DISCARDED
         uses: EndBug/project-fields@v2.1.0
@@ -46,26 +22,3 @@ jobs:
           operation: set
           fields: Status
           values: ${{ github.event.issue.state_reason == 'completed' && 'COMPLETED' || 'DISCARDED' }}
-      - name: Clear dates for DISCARDED issues
-        if: github.event.issue.state_reason != 'completed'
-        uses: EndBug/project-fields@v2.1.0
-        with:
-          github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ vars.PROJECT_URL }}
-          operation: clear
-          fields: Start,End
-
-  handle-reopen:
-    name: Handle Reopened Issues
-    runs-on: ubuntu-latest
-    if: github.event.action == 'reopened'
-
-    steps:
-      - name: Reopened -> PLANNED
-        uses: EndBug/project-fields@v2.1.0
-        with:
-          github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ vars.PROJECT_URL }}
-          operation: set
-          fields: Status
-          values: PLANNED

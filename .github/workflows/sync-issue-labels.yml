@@ -1,8 +1,7 @@
 name: Sync Issue Labels
 
 on:
-  push:
-    paths: [.github/workflows/sync-issue-labels.yml]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,16 +33,47 @@ jobs:
       - name: Authenticate GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Delete all existing labels
+      - name: Analyze label sets
         run: |
-          gh label list --json name -q '.[].name' | \
-          while read -r label; do
-            gh label delete "$label" --yes || true
-          done
+          echo "$LABELS" | yq -r '.[].name' > /tmp/specification.txt
+          gh label list --json name -q '.[].name' > /tmp/repository.txt
+          # Set A: in spec, not in repo (create)
+          comm -23 <(sort /tmp/specification.txt) <(sort /tmp/repository.txt) > /tmp/create.txt
+          # Set B: in spec, in repo (update)
+          comm -12 <(sort /tmp/specification.txt) <(sort /tmp/repository.txt) > /tmp/update.txt
+          # Set C: not in spec, in repo (archive)
+          comm -13 <(sort /tmp/specification.txt) <(sort /tmp/repository.txt) > /tmp/archive.txt
 
-      - name: Create labels from workflow env
+      - name: Create new labels
         run: |
-          echo "$LABELS" | yq -r '.[] | [.name, .color, .description] | @tsv' | \
-          while IFS=$'\t' read -r name color desc; do
-            gh label create "$name" --color "$color" --description "$desc"
-          done
+          while read -r label; do
+            echo "$LABELS" | \
+            yq -r ".[] | select(.name == \"$label\") | [.name, .color, .description] | @tsv" | \
+            while IFS=$'\t' read -r name color desc; do
+              echo "Create new: $name"
+              gh label create "$name" --color "$color" --description "$desc"
+            done
+          done < /tmp/create.txt
+
+      - name: Update existing labels
+        run: |
+          while read -r label; do
+            echo "$LABELS" | \
+            yq -r ".[] | select(.name == \"$label\") | [.name, .color, .description] | @tsv" | \
+            while IFS=$'\t' read -r name color desc; do
+              echo "Update existing: $name"
+              gh label edit "$name" --color "$color" --description "$desc"
+            done
+          done < /tmp/update.txt
+
+      - name: Archive orphaned labels
+        run: |
+          archive_date=$(date +%Y%m%d)
+          while read -r label; do
+            if [[ "$label" =~ ^~~.+___[0-9]+$ ]]; then
+              echo "Skip archived: $label"
+              continue
+            fi
+            echo "Archive orphaned: $label -> ~~${label}___${archive_date}"
+            gh label edit "$label" --name "~~${label}___${archive_date}"
+          done < /tmp/archive.txt

@@ -11,32 +11,23 @@ permissions:
 jobs:
 
   handle-open:
-    name: Handle New PRs
+    name: Handle Opened PRs
     runs-on: ubuntu-latest
-    if: github.event.action == 'opened'
-
+    if: github.event.action == 'opened' || github.event.action == 'reopened'
     steps:
-
-      - name: Add New PR to Project
-        uses: actions/add-to-project@v1.0.2
-        with:
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-          project-url: ${{ vars.PROJECT_URL }}
-
-      - name: User -> EVALUATE | Owner -> ONGOING
+      - name: Update Status to ONGOING
         uses: EndBug/project-fields@v2.1.0
         with:
           github_token: ${{ secrets.PROJECT_TOKEN }}
           project_url: ${{ vars.PROJECT_URL }}
           operation: set
           fields: Status
-          values: ${{ github.actor == vars.PROJECT_OWNER && 'ONGOING' || 'EVALUATE' }}
+          values: ONGOING
 
   handle-close:
     name: Handle Closed PRs
     runs-on: ubuntu-latest
     if: github.event.action == 'closed'
-
     steps:
       - name: Update Status to COMPLETED or DISCARDED
         uses: EndBug/project-fields@v2.1.0
@@ -46,26 +37,3 @@ jobs:
           operation: set
           fields: Status
           values: ${{ github.event.pull_request.merged == true && 'COMPLETED' || 'DISCARDED' }}
-      - name: Clear dates for DISCARDED PRs
-        if: github.event.pull_request.merged == false
-        uses: EndBug/project-fields@v2.1.0
-        with:
-          github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ vars.PROJECT_URL }}
-          operation: clear
-          fields: Start,End
-
-  handle-reopen:
-    name: Handle Reopened PRs
-    runs-on: ubuntu-latest
-    if: github.event.action == 'reopened'
-
-    steps:
-      - name: Reopened -> PLANNED
-        uses: EndBug/project-fields@v2.1.0
-        with:
-          github_token: ${{ secrets.PROJECT_TOKEN }}
-          project_url: ${{ vars.PROJECT_URL }}
-          operation: set
-          fields: Status
-          values: PLANNED
