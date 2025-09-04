@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 2025.1.1
+
+_Updated GitHub workflows for pull requests and issue labels_
+
 ## 2025.1.0
 
 _Ready to use Bash environment along with Git workflow._
