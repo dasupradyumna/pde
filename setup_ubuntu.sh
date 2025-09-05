@@ -13,6 +13,7 @@ declare -A TOOL_VERSIONS=()
 # Command-line options
 OPT__SYSTEM_SCOPE=false
 OPT__UNINSTALL=false
+OPT__SKIP_WEZTERM=false
 
 # Show help message and exit the script, with optional exit code
 show_help() {
@@ -21,6 +22,7 @@ Usage: ./setup_ubuntu.sh [-hsU]
     -h : Show this help message
     -s : System scope (/usr/local); if not set, fallback to user scope (~/.local)
     -U : Uninstall programs and configs
+    -W : Skip WezTerm
 '
     exit $1
 }
@@ -28,11 +30,12 @@ Usage: ./setup_ubuntu.sh [-hsU]
 # Parse command-line options
 parse_opts() {
     # Modify variables based on options
-    OPTIND=1; while getopts ':hsU' option; do
+    OPTIND=1; while getopts ':hsUW' option; do
         case "$option" in
             h) show_help 0 ;;
             s) OPT__SYSTEM_SCOPE=true; INSTALL_DIR=/usr/local ;;
             U) OPT__UNINSTALL=true ;;
+            W) OPT__SKIP_WEZTERM=true ;;
             \?) log -e "Invalid command-line option '-$OPTARG'!"; show_help 1 ;;
             :) log -e "Command-line option '-$OPTARG' requires an argument!"; show_help 1 ;;
         esac
@@ -48,7 +51,8 @@ parse_opts() {
 
     log -i "Parsing command-line options ...
     - System Scope: $OPT__SYSTEM_SCOPE
-    - Uninstall: $OPT__UNINSTALL"
+    - Uninstall: $OPT__UNINSTALL
+    - Skip WezTerm: $OPT__SKIP_WEZTERM"
 }
 
 # Handle SIGINT - exit with code 130 = 128 + 2 (SIGINT)
@@ -69,6 +73,7 @@ main() {
     load_version_lock
     ensure_dependencies
     manage_git
+    manage_wezterm
 
     manage_configs
 }

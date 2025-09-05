@@ -7,6 +7,38 @@ apt_pkg_versions() {
     apt-cache policy "$1" | awk '/Installed:/ {i=$2} /Candidate:/ {c=$2} END {print i, c}'
 }
 
+# Download a file from a GitHub release
+#
+# Usage: curl_file_github <namespace> <version> <remote_file> <local_path>
+curl_file_github() {
+    local -r ns="$1" ver="$2" src="$3" dst="$4"
+    exec_ring_log curl -L "https://github.com/$ns/releases/download/$ver/$src" -o "$dst"
+}
+
+# Execute a command and render last lines of output as a rolling log
+#
+# Usage: exec_ring_log <cmd> [<args> ...]
+exec_ring_log() {
+    local -r cmd="$@" BUFFERSIZE=15
+    local buffer=()
+    tput sc # save-cursor at current position
+
+    # Execute and pipe output to render last BUFFERSIZE lines
+    $cmd 2>&1 | while IFS= read -r line
+    do
+        buffer+=("$line")
+        [ ${#buffer[@]} -gt $BUFFERSIZE ] && buffer=("${buffer[@]:1}")
+        # BUG: breaks when cursor < BUFFERSIZE lines from screen bottom
+        tput rc; tput ed # restore-cursor, erase-down
+        echo && printf '\e[90m%s\e[m\r\n' "${buffer[@]}"
+        sleep 0.1
+    done || { log -eW "Log rendering failed! '$cmd'"; return 1; }
+    [ ${PIPESTATUS[0]} -ne 0 ] && { log -eW "Command failed! '$cmd'"; return 1; }
+
+    # Restore cursor to position before rolling logs
+    tput rc; tput ed
+}
+
 # Check if a package is already up-to-date
 #
 # Usage: is_latest_installed <package_name> <installed_version> <latest_version>
@@ -59,28 +91,4 @@ log() {
     shift $((OPTIND - 1))
 
     echo -e "$prefix: $1\e[m"
-}
-
-# Execute a command and render last lines of output as a rolling log
-#
-# Usage: exec_ring_log <cmd> [<args> ...]
-exec_ring_log() {
-    local -r cmd="$@" BUFFERSIZE=15
-    local buffer=()
-    tput sc # save-cursor at current position
-
-    # Execute and pipe output to render last BUFFERSIZE lines
-    $cmd 2>&1 | while IFS= read -r line
-    do
-        buffer+=("$line")
-        [ ${#buffer[@]} -gt $BUFFERSIZE ] && buffer=("${buffer[@]:1}")
-        # BUG: breaks when cursor < BUFFERSIZE lines from screen bottom
-        tput rc; tput ed # restore-cursor, erase-down
-        echo && printf '\e[90m%s\e[m\r\n' "${buffer[@]}"
-        sleep 0.1
-    done || { log -eW "Log rendering failed! '$cmd'"; return 1; }
-    [ ${PIPESTATUS[0]} -ne 0 ] && { log -eW "Command failed! '$cmd'"; return 1; }
-
-    # Restore cursor to position before rolling logs
-    tput rc; tput ed
 }
