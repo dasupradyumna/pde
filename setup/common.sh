@@ -55,6 +55,7 @@ manage_configs() {
 
     # Manage tool config symlinks
     local -a tools=(delta git lazygit)
+    if ! $OPT__SKIP_WEZTERM; then tools+=(wezterm); fi
     for tool in "${tools[@]}"; do
         if $OPT__UNINSTALL; then
             rm -rf "$HOME/.config/$tool"
