@@ -1,30 +1,31 @@
 --------------------------------------- WEZTERM CONFIGURATION --------------------------------------
 --- TODO:
---- 1. CharSelect key map
---- 2. Hyperlink rules
---- 3. IME pre-editing
---- 4. Launch menu
---- 5. Multiplexing - SSH and Domains
---- 6. Pane selection mode
---- 7. Quick select mode
---- 8. Key bindings and key tables
---- 9. Events
+--- 1. Hyperlink rules
+--- 2. IME pre-editing
+--- 3. Launch menu
+--- 4. Multiplexing - SSH and Domains
+--- 5. Events
 ---   - gui-startup: setup workspaces
 ---   - augment-command-palette: add custom commands
 
 local wezterm = require 'wezterm'
+local utils = require 'utils'
 
 local config = wezterm.config_builder()
+
+--- Keymap configuration
+utils.tbl_extend(config, require 'keymap_cfg')
 
 ----------------------------------- BEHAVIOR -----------------------------------
 
 config.enable_wayland = false
 config.log_unknown_escape_sequences = true
 -- config.mux_enable_ssh_agent = ...
+config.pane_select_font = wezterm.font 'Hermit'
 config.quote_dropped_files = 'WindowsAlwaysQuoted'
 config.scrollback_lines = 10000
 
--- Tab Bar
+-- Tab bar
 config.mouse_wheel_scrolls_tabs = false
 config.switch_to_last_active_tab_when_closing_tab = true
 
@@ -36,6 +37,10 @@ config.check_for_updates_interval_seconds = 0
 config.clean_exit_codes = { 0, 1, 130 }
 config.exit_behavior = 'CloseOnCleanExit'
 config.exit_behavior_messaging = 'Terse'
+
+-- Quick select mode
+config.quick_select_alphabet = 'asdfghjklqwertyiuopzxcvmbn'
+-- config.quick_select_patterns = {} -- TODO:
 
 ---------------------------------- APPEARANCE ----------------------------------
 
@@ -58,7 +63,13 @@ config.bold_brightens_ansi_colors = 'No' -- CHECK: if any software assuming this
 config.color_scheme_dirs = { 'colors' }
 config.color_scheme = 'Midnight'
 
--- Command Palette
+-- Character selection mode
+config.char_select_bg_color = '#1a1c1f'
+config.char_select_fg_color = '#878d96'
+config.char_select_font = wezterm.font 'Hermit'
+config.char_select_font_size = 11
+
+-- Command palette
 config.command_palette_bg_color = '#1a1c1f'
 config.command_palette_fg_color = '#878d96'
 config.command_palette_font = wezterm.font 'Hermit'
@@ -88,7 +99,12 @@ wezterm.on('update-status', function(window) -- window: GuiWin
     { Text = ('  %s '):format(wezterm.hostname():upper()) },
   })
 
+  -- TODO: create key table name to label map
+  local active_kt = window:active_key_table()
+  local active_kt_label = active_kt and ('(%s)  '):format(active_kt) or ''
   window:set_right_status(wezterm.format {
+    { Foreground = { Color = palette.ansi[4] } },
+    { Text = active_kt_label },
     { Foreground = { Color = palette.ansi[5] } },
     { Text = ('%s '):format(wezterm.strftime '%H:%M:%S %a %d %b %Y') },
   })
@@ -113,10 +129,5 @@ wezterm.on('format-tab-title', function(tab)
   local title_format = tab.is_active and ' %s ' or '  %s  '
   return title_format:format(title)
 end)
-
------------------------------------ BINDINGS -----------------------------------
-
--- CHECK: custom bindings
--- config.disable_default_mouse_bindings = true
 
 return config
