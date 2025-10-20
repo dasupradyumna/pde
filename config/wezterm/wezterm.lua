@@ -14,7 +14,7 @@ local utils = require 'utils'
 local config = wezterm.config_builder()
 
 --- Keymap configuration
-utils.tbl_extend(config, require 'keymap_cfg')
+utils.tbl_extend(config, require 'keymaps')
 
 ----------------------------------- BEHAVIOR -----------------------------------
 
