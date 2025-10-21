@@ -13,11 +13,10 @@ local utils = require 'utils'
 
 local config = wezterm.config_builder()
 
---- Keymap configuration
-utils.tbl_extend(config, require 'keymaps')
-
 ----------------------------------- BEHAVIOR -----------------------------------
 
+-- General
+config.check_for_updates = false
 config.enable_wayland = false
 config.log_unknown_escape_sequences = true
 -- config.mux_enable_ssh_agent = ...
@@ -28,10 +27,6 @@ config.scrollback_lines = 10000
 -- Tab bar
 config.mouse_wheel_scrolls_tabs = false
 config.switch_to_last_active_tab_when_closing_tab = true
-
--- Disable update check
-config.check_for_updates = false
-config.check_for_updates_interval_seconds = 0
 
 -- Shell exit code handling
 config.clean_exit_codes = { 0, 1, 130 }
@@ -89,14 +84,14 @@ config.window_padding = { left = '0.8cell', right = '0.8cell', top = '0.4cell', 
 config.show_new_tab_button_in_tab_bar = false
 config.tab_max_width = 25
 config.use_fancy_tab_bar = false
-wezterm.on('update-status', function(window) -- window: GuiWin
+wezterm.on('update-status', function(window, pane)
   local palette = window:effective_config().resolved_palette
 
   window:set_left_status(wezterm.format {
     { Attribute = { Intensity = 'Bold' } },
     { Foreground = { Color = palette.tab_bar.active_tab.fg_color } },
     { Background = { Color = palette.tab_bar.active_tab.bg_color } },
-    { Text = ('  %s '):format(wezterm.hostname():upper()) },
+    { Text = ('  %s '):format(pane:get_domain_name():upper()) },
   })
 
   -- TODO: create key table name to label map
@@ -129,5 +124,12 @@ wezterm.on('format-tab-title', function(tab)
   local title_format = tab.is_active and ' %s ' or '  %s  '
   return title_format:format(title)
 end)
+
+-- Pane
+config.inactive_pane_hsb = { saturation = 0.8, brightness = 0.7 }
+
+---------------------------------- SUB-MODULES ---------------------------------
+
+utils.tbl_extend(config, require 'keymaps')
 
 return config
