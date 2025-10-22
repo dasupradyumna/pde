@@ -10,7 +10,7 @@ stty -ixon
 # Builtin options
 set +o braceexpand
 set +o histexpand
-shopt -s checkhash checkjobs dirspell failglob hostcomplete huponexit progcomp_alias shift_verbose
+shopt -s checkhash checkjobs dirspell hostcomplete huponexit progcomp_alias shift_verbose
 
 # Set environment variables
 # FIGNORE, LS_COLORS
