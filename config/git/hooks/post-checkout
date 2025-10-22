@@ -1,7 +1,7 @@
 #!/bin/bash
 # Set user email config based on the current remote after clone
 
-# Ensures this script is run only once for a repository
+# Ensure this script is run only once for a repository
 if git config get --local user.email &> /dev/null; then exit; fi
 
 # Get repository remote URL

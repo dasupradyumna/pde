@@ -16,7 +16,7 @@ declare -rA __render_styles=(
     [brightcyan]='96'       [brightwhite]='97'
 )
 
-# Prints an escape sequence matching the given style to the terminal
+# Print an escape sequence matching the given style to the terminal
 __render() { printf '\1\e[%sm\2' "${__render_styles["${1:-none}"]}"; }
 
 # Prompt user to continue via yes|no input
