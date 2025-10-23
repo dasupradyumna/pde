@@ -19,7 +19,6 @@ local config = wezterm.config_builder()
 config.check_for_updates = false
 config.enable_wayland = false
 config.log_unknown_escape_sequences = true
--- config.mux_enable_ssh_agent = ...
 config.pane_select_font = wezterm.font 'Hermit'
 config.quote_dropped_files = 'WindowsAlwaysQuoted'
 config.scrollback_lines = 10000
@@ -54,7 +53,7 @@ config.strikethrough_position = '0.5cell'
 config.underline_position = '-0.2cell'
 
 -- Colors
-config.bold_brightens_ansi_colors = 'No' -- CHECK: if any software assuming this to be true breaks
+config.bold_brightens_ansi_colors = 'No'
 config.color_scheme_dirs = { 'colors' }
 config.color_scheme = 'Midnight'
 
@@ -84,6 +83,16 @@ config.window_padding = { left = '0.8cell', right = '0.8cell', top = '0.4cell', 
 config.show_new_tab_button_in_tab_bar = false
 config.tab_max_width = 25
 config.use_fancy_tab_bar = false
+local key_table_labels = {
+  copy_mode = 'COPY',
+  search_mode = 'SEARCH',
+  tab_mode = 'TAB',
+  pane_mode = 'PANE',
+}
+local battery_icons = {
+  value = { '󰂎', '󰁺', '󰁻', '󰁼', '󰁽', '󰁾', '󰁿', '󰂀', '󰂁', '󰂂', '󰁹' },
+  state = { Charging = '󱐋', Full = '󱐋', Discharging = ' ', Unknown = ' ' },
+}
 wezterm.on('update-status', function(window, pane)
   local palette = window:effective_config().resolved_palette
 
@@ -94,14 +103,26 @@ wezterm.on('update-status', function(window, pane)
     { Text = ('  %s '):format(pane:get_domain_name():upper()) },
   })
 
-  -- TODO: create key table name to label map
-  local active_kt = window:active_key_table()
-  local active_kt_label = active_kt and ('(%s)  '):format(active_kt) or ''
+  local active_kt = key_table_labels[window:active_key_table()]
+  local meta = pane:get_metadata() or {}
+  local latency_s = meta.is_tardy and meta.since_last_response_ms / 1000 or nil
+  local battery_info = wezterm.battery_info()[1] -- NOTE: only one battery
+  local battery_charge = battery_info.state_of_charge * 100
+  local battery_color = battery_charge <= 20 and 2 or battery_charge <= 60 and 4 or 3
+  local battery_value = battery_icons.value[math.floor(battery_charge / 10) + 1]
+  local battery_state = battery_icons.state[battery_info.state]
+
   window:set_right_status(wezterm.format {
-    { Foreground = { Color = palette.ansi[4] } },
-    { Text = active_kt_label },
+    { Attribute = { Intensity = 'Bold' } },
+    { Foreground = { Color = palette.ansi[2] } },
+    { Text = latency_s and ('󱑌  %.3fs    '):format(latency_s) or '' },
+    { Foreground = { Color = palette.ansi[6] } },
+    { Text = active_kt and ('-- %s --    '):format(active_kt) or '' },
+    'ResetAttributes',
     { Foreground = { Color = palette.ansi[5] } },
     { Text = ('%s '):format(wezterm.strftime '%H:%M:%S %a %d %b %Y') },
+    { Foreground = { Color = palette.ansi[battery_color] } },
+    { Text = ('%s%s '):format(battery_value, battery_state) },
   })
 end)
 wezterm.on('format-tab-title', function(tab)
@@ -117,10 +138,7 @@ wezterm.on('format-tab-title', function(tab)
   -- )
 
   local title = tab.tab_title
-  if #title == 0 then
-    title = tab.active_pane.domain_name
-    title = title ~= 'local' and title or tab.active_pane.title
-  end
+  if #title == 0 then title = tab.active_pane.title end
   local title_format = tab.is_active and ' %s ' or '  %s  '
   return title_format:format(title)
 end)
