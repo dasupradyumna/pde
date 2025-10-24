@@ -6,7 +6,7 @@
 for module in setup/*.sh; do source "$module"; done
 
 # Global variables
-BINARY_DIR="$HOME/.local/bin"
+LOCAL_DIR="$HOME/.local"
 CONFIG_DIR="$HOME/.config"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
@@ -36,7 +36,7 @@ parse_opts() {
         case "$option" in
             h) show_help 0 ;;
             H) OPT__HEADLESS=true ;;
-            s) OPT__SYSTEM_SCOPE=true; BINARY_DIR=/usr/local/bin ;;
+            s) OPT__SYSTEM_SCOPE=true; LOCAL_DIR=/usr/local ;;
             U) OPT__UNINSTALL=true ;;
             \?) log -e "Invalid command-line option '-$OPTARG'!"; show_help 1 ;;
             :) log -e "Command-line option '-$OPTARG' requires an argument!"; show_help 1 ;;
@@ -52,9 +52,9 @@ parse_opts() {
     fi
 
     log -i "Parsing command-line options ...
+    - Headless Install: $OPT__HEADLESS
     - System Scope: $OPT__SYSTEM_SCOPE
-    - Uninstall: $OPT__UNINSTALL
-    - Skip WezTerm: $OPT__HEADLESS"
+    - Uninstall: $OPT__UNINSTALL"
 }
 
 # Handle SIGINT - exit with code 130 = 128 + 2 (SIGINT)
@@ -68,7 +68,7 @@ main() {
     trap interrupt_handler INT
     trap exit_handler EXIT
     tput civis
-    $OPT__UNINSTALL || mkdir -p "$TEMP_DIR" "$BINARY_DIR" "$CONFIG_DIR"
+    $OPT__UNINSTALL || mkdir -p "$TEMP_DIR" "$LOCAL_DIR/bin" "$CONFIG_DIR"
 
     parse_opts $@
 

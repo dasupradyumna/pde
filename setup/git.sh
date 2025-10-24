@@ -13,7 +13,7 @@ manage_git() {
         exec_ring_log $SUDO apt-get install -y git
         log -i "Downgraded to Git $(git --version | awk '{print $3}')"
 
-        $SUDO rm "$BINARY_DIR/lazygit" "$BINARY_DIR/delta" 1>/dev/null
+        cd "$LOCAL_DIR/bin" && $SUDO rm lazygit delta 1>/dev/null && cd ~-
         log -i 'Uninstalled LazyGit and Delta binaries'
     else
         __install_git
@@ -33,7 +33,7 @@ __install_git() {
     echo && log -i 'Setting up Git from PPA ...'
 
     # Check if Git PPA repository is added to APT sources
-    if ! apt-cache policy | grep 'http://ppa.launchpad.net/git-core/ppa/ubuntu' &>/dev/null; then
+    if ! $SUDO apt-cache policy | grep 'git-core/ppa' &>/dev/null; then
         exec_ring_log $SUDO add-apt-repository -y ppa:git-core/ppa
         log -i 'Added git PPA repository to APT sources'
     else
@@ -70,9 +70,9 @@ __install_lazygit() {
 
     # Install LazyGit binary
     tar xf pkg.tar.gz lazygit
-    $SUDO install lazygit -D -t "$BINARY_DIR"
+    $SUDO install lazygit -D -t "$LOCAL_DIR/bin"
     cd ~-
-    log -i "Installed LazyGit to $BINARY_DIR"
+    log -i "Installed LazyGit to $LOCAL_DIR/bin"
 }
 
 # Install Delta if missing or not already up-to-date
@@ -95,7 +95,7 @@ __install_delta() {
 
     # Install Delta binary
     tar xf pkg.tar.gz "$pkg/delta"
-    $SUDO install "$pkg/delta" -D -t "$BINARY_DIR"
+    $SUDO install "$pkg/delta" -D -t "$LOCAL_DIR/bin"
     cd ~-
-    log -i "Installed Delta to $BINARY_DIR"
+    log -i "Installed Delta to $LOCAL_DIR/bin"
 }
