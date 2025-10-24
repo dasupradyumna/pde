@@ -1,6 +1,7 @@
 ------------------------------------------- KEY BINDINGS -------------------------------------------
 --- TODO: list of unbound actions
---- AttachDomain | DetachDomain
+--- Mouse-related keybindings
+--- AttachDomain
 --- Confirmation + InputSelector + PromptInputLine = custom menus?
 --- EmitEvent for custom events (wezterm.emit)
 --- OpenLinkAtMouseCursor
@@ -8,11 +9,11 @@
 --- SpawnCommandInNewTab
 --- SwitchToWorkspace
 --- NOTE:
---- Clipboard is explicit, but primary selection is implicit with the mouse (only)
-
-local M = {}
+--- Clipboard is explicit, but primary selection is implicit (only with mouse)
 
 local action = require('wezterm').action
+
+local M = {}
 
 --- Creates a KeyAssignment object for WezTerm
 local function key_assignment(spec)
@@ -35,6 +36,7 @@ local keys = {
   { 'e', action.CharSelect {}, 'LEADER' },
   { 'y', action.CopyTo 'ClipboardAndPrimarySelection', 'LEADER' },
   { '-', action.DecreaseFontSize, 'CTRL' },
+  { 'd', action.DetachDomain 'CurrentPaneDomain', 'LEADER' },
   { '=', action.IncreaseFontSize, 'CTRL' },
   { 'h', action.MoveTabRelative(-1), 'CTRL|SHIFT' },
   { 'l', action.MoveTabRelative(1), 'CTRL|SHIFT' },
@@ -51,7 +53,7 @@ local keys = {
   { 'q', action.QuickSelect, 'LEADER' }, -- CHECK: QuickSelectArgs
   { '0', action.ResetFontSize, 'CTRL' },
   { '/', action.Search 'CurrentSelectionOrEmptyString', 'LEADER' },
-  { 'd', action.ShowDebugOverlay, 'LEADER' },
+  { 'l', action.ShowDebugOverlay, 'LEADER' },
   { 'n', action.SpawnWindow, 'LEADER' },
   { 'z', action.TogglePaneZoomState, 'LEADER' },
 }

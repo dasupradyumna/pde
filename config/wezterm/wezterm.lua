@@ -3,10 +3,12 @@
 --- 1. Hyperlink rules
 --- 2. IME pre-editing
 --- 3. Launch menu
---- 4. Multiplexing - SSH and Domains
 --- 5. Events
 ---   - gui-startup: setup workspaces
 ---   - augment-command-palette: add custom commands
+
+-- Log debug statements
+ENABLE_DEBUG_LOGGING = false
 
 local wezterm = require 'wezterm'
 local utils = require 'utils'
@@ -105,20 +107,18 @@ wezterm.on('update-status', function(window, pane)
 
   local active_kt = key_table_labels[window:active_key_table()]
   local meta = pane:get_metadata() or {}
-  local latency_s = meta.is_tardy and meta.since_last_response_ms / 1000 or nil
   local battery_info = wezterm.battery_info()[1] -- NOTE: only one battery
   local battery_charge = battery_info.state_of_charge * 100
-  local battery_color = battery_charge <= 20 and 2 or battery_charge <= 60 and 4 or 3
+  local battery_color = battery_charge <= 20 and 2 or battery_charge <= 70 and 4 or 3
   local battery_value = battery_icons.value[math.floor(battery_charge / 10) + 1]
   local battery_state = battery_icons.state[battery_info.state]
 
   window:set_right_status(wezterm.format {
     { Attribute = { Intensity = 'Bold' } },
     { Foreground = { Color = palette.ansi[2] } },
-    { Text = latency_s and ('󱑌  %.3fs    '):format(latency_s) or '' },
+    { Text = meta.is_tardy and ('󱑌  %.3fs '):format(meta.since_last_response_ms / 1000) or '' },
     { Foreground = { Color = palette.ansi[6] } },
-    { Text = active_kt and ('-- %s --    '):format(active_kt) or '' },
-    'ResetAttributes',
+    { Text = active_kt and ('[%s] '):format(active_kt) or '' },
     { Foreground = { Color = palette.ansi[5] } },
     { Text = ('%s '):format(wezterm.strftime '%H:%M:%S %a %d %b %Y') },
     { Foreground = { Color = palette.ansi[battery_color] } },
@@ -126,17 +126,6 @@ wezterm.on('update-status', function(window, pane)
   })
 end)
 wezterm.on('format-tab-title', function(tab)
-  -- DEBUG(
-  --   ('tab_title:[%s] is_active:[%s] pane_title:[%s] foreground_process_name:[%s] cwd:[%s] domain_name:[%s]'):format(
-  --     tab.tab_title,
-  --     tab.is_active,
-  --     tab.active_pane.title,
-  --     tab.active_pane.foreground_process_name,
-  --     tab.active_pane.current_working_dir,
-  --     tab.active_pane.domain_name
-  --   )
-  -- )
-
   local title = tab.tab_title
   if #title == 0 then title = tab.active_pane.title end
   local title_format = tab.is_active and ' %s ' or '  %s  '
@@ -149,5 +138,7 @@ config.inactive_pane_hsb = { saturation = 0.8, brightness = 0.7 }
 ---------------------------------- SUB-MODULES ---------------------------------
 
 utils.tbl_extend(config, require 'keymaps')
+utils.tbl_extend(config, require 'domains')
+config.exec_domains = require('exec_domains').docker()
 
 return config
