@@ -50,19 +50,18 @@ manage_configs() {
         echo && log -i 'Uninstalling configs ...'
     else
         echo && log -i 'Installing configs ...'
-        mkdir -p "$HOME/.config"
     fi
 
     # Manage tool config symlinks
     local -a tools=(delta git lazygit)
-    if ! $OPT__SKIP_WEZTERM; then tools+=(wezterm); fi
+    if ! $OPT__HEADLESS; then tools+=(wezterm); fi
     for tool in "${tools[@]}"; do
         if $OPT__UNINSTALL; then
-            rm -rf "$HOME/.config/$tool"
-            log -i "Removed: $HOME/.config/$tool"
+            rm -rf "$CONFIG_DIR/$tool"
+            log -i "Removed: $CONFIG_DIR/$tool"
         else
-            ln -sfT "$PWD/config/$tool" "$HOME/.config/$tool"
-            log -i "Linked: $PWD/config/$tool -> $HOME/.config/$tool"
+            ln -sfT "$PWD/config/$tool" "$CONFIG_DIR/$tool"
+            log -i "Linked: $PWD/config/$tool -> $CONFIG_DIR/$tool"
         fi
     done
 

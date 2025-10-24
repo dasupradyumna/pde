@@ -13,7 +13,7 @@ manage_git() {
         exec_ring_log $SUDO apt-get install -y git
         log -i "Downgraded to Git $(git --version | awk '{print $3}')"
 
-        $SUDO rm "$INSTALL_DIR/bin/lazygit" "$INSTALL_DIR/bin/delta" 1>/dev/null
+        $SUDO rm "$BINARY_DIR/lazygit" "$BINARY_DIR/delta" 1>/dev/null
         log -i 'Uninstalled LazyGit and Delta binaries'
     else
         __install_git
@@ -70,9 +70,9 @@ __install_lazygit() {
 
     # Install LazyGit binary
     tar xf pkg.tar.gz lazygit
-    $SUDO install lazygit -D -t "$INSTALL_DIR/bin"
+    $SUDO install lazygit -D -t "$BINARY_DIR"
     cd ~-
-    log -i "Installed LazyGit to $INSTALL_DIR/bin"
+    log -i "Installed LazyGit to $BINARY_DIR"
 }
 
 # Install Delta if missing or not already up-to-date
@@ -95,7 +95,7 @@ __install_delta() {
 
     # Install Delta binary
     tar xf pkg.tar.gz "$pkg/delta"
-    $SUDO install "$pkg/delta" -D -t "$INSTALL_DIR/bin"
+    $SUDO install "$pkg/delta" -D -t "$BINARY_DIR"
     cd ~-
-    log -i "Installed Delta to $INSTALL_DIR/bin"
+    log -i "Installed Delta to $BINARY_DIR"
 }
