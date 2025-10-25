@@ -43,6 +43,13 @@ manage_wezterm() {
             "$LOCAL_DIR/share/bash-completion/completions/wezterm"
         log -i "Installed WezTerm bash completion to $LOCAL_DIR/share"
 
+        # Install WezTerm context menu to Nautilus
+        if ! $OPT__HEADLESS; then
+            mkdir -p "$LOCAL_DIR/share/nautilus-python/extensions"
+            $SUDO cp '.wezterm_appimage/usr/share/nautilus-python/extensions/wezterm-nautilus.py' \
+                "$LOCAL_DIR/share/nautilus-python/extensions/wezterm-nautilus.py"
+        fi
+
         cd ~-
     fi
 }

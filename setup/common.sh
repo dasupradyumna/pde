@@ -17,12 +17,13 @@ load_version_lock() {
 ensure_dependencies() {
     if $OPT__UNINSTALL; then return; fi
 
-    local -ra DEPS=('bash-completion' 'build-essential' 'curl' 'software-properties-common')
+    local -a deps=('bash-completion' 'build-essential' 'curl' 'software-properties-common')
+    $OPT__HEADLESS || deps+=('python3-nautilus')
     echo && log -i 'Ensuring common dependencies are installed ...'
 
     # Check if dependencies are already up-to-date
     local installed latest skip_install=true
-    for dep in "${DEPS[@]}"; do
+    for dep in "${deps[@]}"; do
         read -r installed latest < <(apt_pkg_versions "$dep")
         if ! is_latest_installed "$dep" "$installed" "$latest"; then skip_install=false; fi
     done
@@ -54,7 +55,7 @@ manage_configs() {
 
     # Manage tool config symlinks
     local -a tools=(delta git lazygit)
-    if ! $OPT__HEADLESS; then tools+=(wezterm); fi
+    $OPT__HEADLESS || tools+=(wezterm)
     for tool in "${tools[@]}"; do
         if $OPT__UNINSTALL; then
             rm -rf "$CONFIG_DIR/$tool"
