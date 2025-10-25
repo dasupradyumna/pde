@@ -1,17 +1,15 @@
 ------------------------------------------- KEY BINDINGS -------------------------------------------
 --- TODO: list of unbound actions
 --- Mouse-related keybindings
---- AttachDomain
---- Confirmation + InputSelector + PromptInputLine = custom menus?
 --- EmitEvent for custom events (wezterm.emit)
---- OpenLinkAtMouseCursor
---- ShowLauncher
+--- ShowLauncher(Args)
 --- SpawnCommandInNewTab
---- SwitchToWorkspace
 --- NOTE:
 --- Clipboard is explicit, but primary selection is implicit (only with mouse)
 
-local action = require('wezterm').action
+local wezterm = require 'wezterm'
+local wezact = wezterm.action
+local useract = require 'actions'
 
 local M = {}
 
@@ -23,39 +21,42 @@ end
 
 -- M.disable_default_mouse_bindings = true
 M.disable_default_key_bindings = true
-M.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 500 }
+M.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 M.keys = {}
 M.key_tables = {}
 
 -- Global keybindings
 local keys = {
-  { ';', action.ActivateCommandPalette, 'LEADER' },
-  { 'c', action.ActivateCopyMode, 'LEADER' },
-  { 't', action.ActivateKeyTable { name = 'tab_mode', prevent_fallback = true }, 'LEADER' },
-  { 'p', action.ActivateKeyTable { name = 'pane_mode', prevent_fallback = true }, 'LEADER' },
-  { 'e', action.CharSelect {}, 'LEADER' },
-  { 'y', action.CopyTo 'ClipboardAndPrimarySelection', 'LEADER' },
-  { '-', action.DecreaseFontSize, 'CTRL' },
-  { 'd', action.DetachDomain 'CurrentPaneDomain', 'LEADER' },
-  { '=', action.IncreaseFontSize, 'CTRL' },
-  { 'h', action.MoveTabRelative(-1), 'CTRL|SHIFT' },
-  { 'l', action.MoveTabRelative(1), 'CTRL|SHIFT' },
+  { ';', wezact.ActivateCommandPalette, 'LEADER' },
+  { 'c', wezact.ActivateCopyMode, 'LEADER' },
+  { 't', wezact.ActivateKeyTable { name = 'tab_mode', prevent_fallback = true }, 'LEADER' },
+  { 'p', wezact.ActivateKeyTable { name = 'pane_mode', prevent_fallback = true }, 'LEADER' },
+  { 'Tab', wezact.ActivateTabRelative(-1), 'CTRL|SHIFT' },
+  { 'Tab', wezact.ActivateTabRelative(1), 'CTRL' },
+  { 'e', wezact.CharSelect {}, 'LEADER' },
+  { 'y', wezact.CopyTo 'ClipboardAndPrimarySelection', 'LEADER' },
+  { '-', wezact.DecreaseFontSize, 'CTRL' },
+  { 'q', wezact.DetachDomain 'CurrentPaneDomain', 'LEADER' },
+  { '=', wezact.IncreaseFontSize, 'CTRL' },
+  { 'h', wezact.MoveTabRelative(-1), 'CTRL|SHIFT' },
+  { 'l', wezact.MoveTabRelative(1), 'CTRL|SHIFT' },
   {
     'l',
-    action.Multiple {
-      action.ClearScrollback 'ScrollbackOnly', -- Clears terminal scrollback
-      action.SendKey { key = 'l', mods = 'CTRL' }, -- Clears current viewport
+    wezact.Multiple {
+      wezact.ClearScrollback 'ScrollbackOnly', -- Clears terminal scrollback
+      wezact.SendKey { key = 'l', mods = 'CTRL' }, -- Clears current viewport
     },
     'CTRL',
   },
-  { 'v', action.PasteFrom 'Clipboard', 'LEADER' },
-  { 'V', action.PasteFrom 'PrimarySelection', 'LEADER' },
-  { 'q', action.QuickSelect, 'LEADER' }, -- CHECK: QuickSelectArgs
-  { '0', action.ResetFontSize, 'CTRL' },
-  { '/', action.Search 'CurrentSelectionOrEmptyString', 'LEADER' },
-  { 'l', action.ShowDebugOverlay, 'LEADER' },
-  { 'n', action.SpawnWindow, 'LEADER' },
-  { 'z', action.TogglePaneZoomState, 'LEADER' },
+  { 'v', wezact.PasteFrom 'Clipboard', 'LEADER' },
+  { 'V', wezact.PasteFrom 'PrimarySelection', 'LEADER' },
+  { 'Q', wezact.QuickSelect, 'LEADER' }, -- CHECK: QuickSelectArgs
+  { '0', wezact.ResetFontSize, 'CTRL' },
+  { '/', wezact.Search 'CurrentSelectionOrEmptyString', 'LEADER' },
+  { 'l', wezact.ShowDebugOverlay, 'LEADER' },
+  { 'n', wezact.SpawnWindow, 'LEADER' },
+  { 'd', useract.SwitchDomain, 'LEADER' },
+  { 'z', wezact.TogglePaneZoomState, 'LEADER' },
 }
 for _, spec in ipairs(keys) do
   table.insert(M.keys, key_assignment(spec))
@@ -65,86 +66,91 @@ end
 local key_tables = {
   copy_mode = {
     -- Disable global keybindings that conflict with copy mode
-    { 'e', action.DisableDefaultAssignment, 'LEADER' },
-    { '/', action.DisableDefaultAssignment, 'LEADER' },
-    { 'q', action.DisableDefaultAssignment, 'LEADER' },
-    { 'y', action.DisableDefaultAssignment, 'LEADER' },
+    { 'e', wezact.DisableDefaultAssignment, 'LEADER' },
+    { '/', wezact.DisableDefaultAssignment, 'LEADER' },
+    { 'q', wezact.DisableDefaultAssignment, 'LEADER' },
+    { 'y', wezact.DisableDefaultAssignment, 'LEADER' },
     -- Copy mode keybindings
-    { 'c', action.CopyMode 'ClearSelectionMode', 'CTRL' },
-    { '/', action.Search 'CurrentSelectionOrEmptyString' },
-    { 'i', action.CopyMode 'EditPattern' },
-    { ';', action.CopyMode 'JumpAgain' },
-    { ',', action.CopyMode 'JumpReverse' },
-    { 'F', action.CopyMode { JumpBackward = { prev_char = false } } },
-    { 'T', action.CopyMode { JumpBackward = { prev_char = true } } },
-    { 'f', action.CopyMode { JumpForward = { prev_char = false } } },
-    { 't', action.CopyMode { JumpForward = { prev_char = true } } },
-    { 'b', action.CopyMode 'MoveBackwardWord' },
-    { 'u', action.CopyMode { MoveByPage = -0.5 }, 'CTRL' },
-    { 'd', action.CopyMode { MoveByPage = 0.5 }, 'CTRL' },
-    { 'j', action.CopyMode 'MoveDown' },
-    { 'w', action.CopyMode 'MoveForwardWord' },
-    { 'e', action.CopyMode 'MoveForwardWordEnd' },
-    { 'h', action.CopyMode 'MoveLeft' },
-    { 'l', action.CopyMode 'MoveRight' },
-    { '$', action.CopyMode 'MoveToEndOfLineContent' },
-    { 'G', action.CopyMode 'MoveToScrollbackBottom' },
-    { 'g', action.CopyMode 'MoveToScrollbackTop' },
-    { 's', action.CopyMode 'MoveToSelectionOtherEnd' },
-    { '^', action.CopyMode 'MoveToStartOfLine' },
-    { '0', action.CopyMode 'MoveToStartOfLineContent' },
-    { 'J', action.CopyMode 'MoveToViewportBottom' },
-    { 'K', action.CopyMode 'MoveToViewportTop' },
-    { 'k', action.CopyMode 'MoveUp' },
-    { 'v', action.CopyMode { SetSelectionMode = 'Cell' } },
-    { 'V', action.CopyMode { SetSelectionMode = 'Line' } },
-    { 'v', action.CopyMode { SetSelectionMode = 'Block' }, 'CTRL' },
-    { 'y', action.CopyTo 'ClipboardAndPrimarySelection' },
-    { 'n', action.Multiple { action.CopyMode 'NextMatch', action.CopyMode 'ClearSelectionMode' } },
-    { 'N', action.Multiple { action.CopyMode 'PriorMatch', action.CopyMode 'ClearSelectionMode' } },
-    { 'g', action.Multiple { action.ScrollToBottom, action.CopyMode 'Close' }, 'CTRL' },
+    { 'c', wezact.CopyMode 'ClearSelectionMode', 'CTRL' },
+    { '/', wezact.Search 'CurrentSelectionOrEmptyString' },
+    { 'i', wezact.CopyMode 'EditPattern' },
+    { ';', wezact.CopyMode 'JumpAgain' },
+    { ',', wezact.CopyMode 'JumpReverse' },
+    { 'F', wezact.CopyMode { JumpBackward = { prev_char = false } } },
+    { 'T', wezact.CopyMode { JumpBackward = { prev_char = true } } },
+    { 'f', wezact.CopyMode { JumpForward = { prev_char = false } } },
+    { 't', wezact.CopyMode { JumpForward = { prev_char = true } } },
+    { 'b', wezact.CopyMode 'MoveBackwardWord' },
+    { 'u', wezact.CopyMode { MoveByPage = -0.5 }, 'CTRL' },
+    { 'd', wezact.CopyMode { MoveByPage = 0.5 }, 'CTRL' },
+    { 'j', wezact.CopyMode 'MoveDown' },
+    { 'w', wezact.CopyMode 'MoveForwardWord' },
+    { 'e', wezact.CopyMode 'MoveForwardWordEnd' },
+    { 'h', wezact.CopyMode 'MoveLeft' },
+    { 'l', wezact.CopyMode 'MoveRight' },
+    { '$', wezact.CopyMode 'MoveToEndOfLineContent' }, -- BUG: does not work
+    { 'G', wezact.CopyMode 'MoveToScrollbackBottom' },
+    { 'g', wezact.CopyMode 'MoveToScrollbackTop' },
+    { 's', wezact.CopyMode 'MoveToSelectionOtherEnd' },
+    { '^', wezact.CopyMode 'MoveToStartOfLine' },
+    { '0', wezact.CopyMode 'MoveToStartOfLineContent' },
+    { 'J', wezact.CopyMode 'MoveToViewportBottom' },
+    { 'K', wezact.CopyMode 'MoveToViewportTop' },
+    { 'k', wezact.CopyMode 'MoveUp' },
+    { 'v', wezact.CopyMode { SetSelectionMode = 'Cell' } },
+    { 'V', wezact.CopyMode { SetSelectionMode = 'Line' } },
+    { 'v', wezact.CopyMode { SetSelectionMode = 'Block' }, 'CTRL' },
+    {
+      'y',
+      wezact.Multiple {
+        wezact.CopyTo 'ClipboardAndPrimarySelection',
+        wezact.CopyMode 'ClearSelectionMode',
+      },
+    },
+    { 'n', wezact.Multiple { wezact.CopyMode 'NextMatch', wezact.CopyMode 'ClearSelectionMode' } },
+    { 'N', wezact.Multiple { wezact.CopyMode 'PriorMatch', wezact.CopyMode 'ClearSelectionMode' } },
+    { 'g', wezact.Multiple { wezact.ScrollToBottom, wezact.CopyMode 'Close' }, 'CTRL' },
   },
   search_mode = {
     -- Disable global keybindings that conflict with search mode
-    { 'c', action.DisableDefaultAssignment, 'LEADER' },
-    { 'e', action.DisableDefaultAssignment, 'LEADER' },
-    { 'q', action.DisableDefaultAssignment, 'LEADER' },
-    { 'y', action.DisableDefaultAssignment, 'LEADER' },
+    { 'c', wezact.DisableDefaultAssignment, 'LEADER' },
+    { 'e', wezact.DisableDefaultAssignment, 'LEADER' },
+    { 'q', wezact.DisableDefaultAssignment, 'LEADER' },
+    { 'y', wezact.DisableDefaultAssignment, 'LEADER' },
     -- Search mode keybindings
     {
       'c',
-      action.Multiple { action.CopyMode 'AcceptPattern', action.CopyMode 'ClearSelectionMode' },
+      wezact.Multiple { wezact.CopyMode 'AcceptPattern', wezact.CopyMode 'ClearSelectionMode' },
       'CTRL',
     },
-    { 'u', action.CopyMode 'ClearPattern', 'CTRL' },
-    { 'g', action.Multiple { action.ScrollToBottom, action.CopyMode 'Close' }, 'CTRL' },
-    { 'm', action.CopyMode 'CycleMatchType', 'CTRL' },
+    { 'u', wezact.CopyMode 'ClearPattern', 'CTRL' },
+    { 'g', wezact.Multiple { wezact.ScrollToBottom, wezact.CopyMode 'Close' }, 'CTRL' },
+    { 'm', wezact.CopyMode 'CycleMatchType', 'CTRL' },
   },
   tab_mode = {
-    { 'p', action.ActivateLastTab },
-    { '1', action.ActivateTab(0) },
-    { '2', action.ActivateTab(1) },
-    { '3', action.ActivateTab(2) },
-    { '4', action.ActivateTab(3) },
-    { '5', action.ActivateTab(4) },
-    { '6', action.ActivateTab(5) },
-    { '7', action.ActivateTab(6) },
-    { '8', action.ActivateTab(7) },
-    { '9', action.ActivateTab(8) },
-    { 'h', action.ActivateTabRelative(-1) },
-    { 'l', action.ActivateTabRelative(1) },
-    { 'q', action.CloseCurrentTab { confirm = true } },
-    { 'n', action.SpawnTab 'CurrentPaneDomain' },
-    { 'c', action.PopKeyTable, 'CTRL' },
+    { 'p', wezact.ActivateLastTab },
+    { '1', wezact.ActivateTab(0) },
+    { '2', wezact.ActivateTab(1) },
+    { '3', wezact.ActivateTab(2) },
+    { '4', wezact.ActivateTab(3) },
+    { '5', wezact.ActivateTab(4) },
+    { '6', wezact.ActivateTab(5) },
+    { '7', wezact.ActivateTab(6) },
+    { '8', wezact.ActivateTab(7) },
+    { '9', wezact.ActivateTab(8) },
+    { 'r', useract.ChangeTabTitle },
+    { 'q', wezact.CloseCurrentTab { confirm = true } },
+    { 'n', wezact.SpawnTab 'CurrentPaneDomain' },
+    { 'c', wezact.PopKeyTable, 'CTRL' },
   },
   pane_mode = {
-    { 'q', action.CloseCurrentPane { confirm = true } },
-    { 'a', action.PaneSelect { mode = 'Activate' } },
-    { 's', action.PaneSelect { mode = 'SwapWithActiveKeepFocus' } },
-    { 't', action.PaneSelect { mode = 'MoveToNewTab' } },
-    { 'h', action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-    { 'v', action.SplitVertical { domain = 'CurrentPaneDomain' } },
-    { 'c', action.PopKeyTable, 'CTRL' },
+    { 'q', wezact.CloseCurrentPane { confirm = true } },
+    { 'a', wezact.PaneSelect { mode = 'Activate' } },
+    { 's', wezact.PaneSelect { mode = 'SwapWithActiveKeepFocus' } },
+    { 't', wezact.PaneSelect { mode = 'MoveToNewTab' } },
+    { 'v', wezact.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+    { 'h', wezact.SplitVertical { domain = 'CurrentPaneDomain' } },
+    { 'c', wezact.PopKeyTable, 'CTRL' },
   },
 }
 for name, tbl in pairs(key_tables) do

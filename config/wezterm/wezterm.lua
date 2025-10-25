@@ -95,8 +95,10 @@ local battery_icons = {
   value = { '󰂎', '󰁺', '󰁻', '󰁼', '󰁽', '󰁾', '󰁿', '󰂀', '󰂁', '󰂂', '󰁹' },
   state = { Charging = '󱐋', Full = '󱐋', Discharging = ' ', Unknown = ' ' },
 }
-wezterm.on('update-status', function(window, pane)
+wezterm.on('update-status', function(window)
   local palette = window:effective_config().resolved_palette
+  local pane = window:active_pane()
+  if not pane then return end
 
   window:set_left_status(wezterm.format {
     { Attribute = { Intensity = 'Bold' } },
@@ -137,8 +139,15 @@ config.inactive_pane_hsb = { saturation = 0.8, brightness = 0.7 }
 
 ---------------------------------- SUB-MODULES ---------------------------------
 
-utils.tbl_extend(config, require 'keymaps')
-utils.tbl_extend(config, require 'domains')
+require 'actions' -- Require first to define global variables
+
+-- Configure domains
+config.unix_domains = DOMAINS.unix
+config.ssh_domains = DOMAINS.ssh
+config.default_domain = 'mux:local'
 config.exec_domains = require('exec_domains').docker()
+
+-- Configure keymaps
+utils.tbl_extend(config, require 'keymaps')
 
 return config
