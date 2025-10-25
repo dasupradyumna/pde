@@ -29,6 +29,7 @@ M.key_tables = {}
 local keys = {
   { ';', wezact.ActivateCommandPalette, 'LEADER' },
   { 'c', wezact.ActivateCopyMode, 'LEADER' },
+  { 'w', wezact.ActivateKeyTable { name = 'workspace_mode', prevent_fallback = true }, 'LEADER' },
   { 't', wezact.ActivateKeyTable { name = 'tab_mode', prevent_fallback = true }, 'LEADER' },
   { 'p', wezact.ActivateKeyTable { name = 'pane_mode', prevent_fallback = true }, 'LEADER' },
   { 'Tab', wezact.ActivateTabRelative(-1), 'CTRL|SHIFT' },
@@ -126,6 +127,11 @@ local key_tables = {
     { 'u', wezact.CopyMode 'ClearPattern', 'CTRL' },
     { 'g', wezact.Multiple { wezact.ScrollToBottom, wezact.CopyMode 'Close' }, 'CTRL' },
     { 'm', wezact.CopyMode 'CycleMatchType', 'CTRL' },
+  },
+  workspace_mode = {
+    { 'n', useract.CreateWorkspace },
+    { 'r', useract.RenameWorkspace },
+    { 's', useract.SwitchWorkspace },
   },
   tab_mode = {
     { 'p', wezact.ActivateLastTab },

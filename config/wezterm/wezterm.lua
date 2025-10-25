@@ -10,8 +10,9 @@
 -- Log debug statements
 ENABLE_DEBUG_LOGGING = false
 
-local wezterm = require 'wezterm'
+require 'actions' -- Defines global variables
 local utils = require 'utils'
+local wezterm = require 'wezterm'
 
 local config = wezterm.config_builder()
 
@@ -75,8 +76,8 @@ config.ui_key_cap_rendering = 'Emacs'
 
 -- Window
 config.adjust_window_size_when_changing_font_size = false
-config.initial_rows = 40
-config.initial_cols = 160
+-- config.initial_rows = 40 -- CHECK: if this can be made dynamic
+-- config.initial_cols = 160
 config.window_content_alignment = { horizontal = 'Center', vertical = 'Center' }
 config.window_decorations = 'NONE'
 config.window_padding = { left = '0.8cell', right = '0.8cell', top = '0.4cell', bottom = '0.4cell' }
@@ -88,6 +89,7 @@ config.use_fancy_tab_bar = false
 local key_table_labels = {
   copy_mode = 'COPY',
   search_mode = 'SEARCH',
+  workspace_mode = 'WORKSPACE',
   tab_mode = 'TAB',
   pane_mode = 'PANE',
 }
@@ -104,7 +106,8 @@ wezterm.on('update-status', function(window)
     { Attribute = { Intensity = 'Bold' } },
     { Foreground = { Color = palette.tab_bar.active_tab.fg_color } },
     { Background = { Color = palette.tab_bar.active_tab.bg_color } },
-    { Text = ('  %s '):format(pane:get_domain_name():upper()) },
+    { Text = ('  %s '):format(pane:get_domain_name():upper()) },
+    { Text = (' %s '):format(window:active_workspace():upper()) },
   })
 
   local active_kt = key_table_labels[window:active_key_table()]
@@ -139,8 +142,6 @@ config.inactive_pane_hsb = { saturation = 0.8, brightness = 0.7 }
 
 ---------------------------------- SUB-MODULES ---------------------------------
 
-require 'actions' -- Require first to define global variables
-
 -- Configure domains
 config.unix_domains = DOMAINS.unix
 config.ssh_domains = DOMAINS.ssh
@@ -148,6 +149,6 @@ config.default_domain = 'mux:local'
 config.exec_domains = require('exec_domains').docker()
 
 -- Configure keymaps
-utils.tbl_extend(config, require 'keymaps')
+utils.dict_extend(config, require 'keymaps')
 
 return config
