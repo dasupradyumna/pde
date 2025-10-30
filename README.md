@@ -1,15 +1,15 @@
 # Personal Development Environment
 
-This repository contains the installation script, configurations and dot files for all the software
-tools that form my personal development environment. This environment comprises mainly of command
-line utilities and terminal-based tools, trying to emulate the Unix philosophy.
+A streamlined development environment setup for Ubuntu systems, featuring essential CLI tools and
+custom configurations. Built with the *Unix philosophy* in mind, focusing on terminal-based tools for
+maximum efficiency and productivity.
 
 ## Components
 
-- Installation Script
-- Version Lock File
-- Custom Bash Environment
-- Git Workflow Tools - Git, LazyGit & Delta
+- **Automated Setup**: One-command installation with version locking
+- **Git Tools**: LazyGit (0.54.2) + Delta (0.18.2) for enhanced git workflow
+- **Custom Bash**: Aliases, prompts, and utilities for productivity
+- **WezTerm**: Terminal multiplexer with custom theme and keybindings
 
 ## Installation
 
@@ -21,9 +21,32 @@ This script ensures all system dependencies are installed, downloads all PDE too
 their configurations to `~/.config` (system config directory not supported yet). Tool versions are
 locked using `version.lock` file for reproducible release builds.
 
+### Usage
+
 ```bash
-./setup_ubuntu.sh -h            # Displays help message
-./setup_ubuntu.sh               # Installs PDE at local scope
-./setup_ubuntu.sh -s            # Installs PDE at system scope
-./setup_ubuntu.sh -U [-s]       # Uninstalls PDE at specified scope
+# Install locally
+./setup_ubuntu.sh
+
+# Install system-wide
+./setup_ubuntu.sh -s
+
+# Install headless
+./setup_ubuntu.sh -h
+
+# Uninstall
+./setup_ubuntu.sh -U
+```
+
+## Project Structure
+
+```
+├── setup/           # Modular installation modules
+├── config/          # Tool configurations
+│   ├── bash/        # Custom bash environment
+│   ├── delta/       # Delta diff enhancer
+│   ├── git/         # Git version control
+│   ├── lazygit/     # LazyGit git helper
+│   └── wezterm/     # WezTerm multiplexer
+├── setup_ubuntu.sh  # Main installation script
+└── version.lock     # Tool version specifications
 ```

@@ -45,7 +45,7 @@ venv() {
         __render red; echo -e "[ERROR] Command not specified!\n\n$HELP"; return 1
     fi
 
-    if [ "$cmd" == 'list' ]; then         ### LIST : list all virtual environments
+    if [ "$cmd" == 'list' ]; then         ### LIST : List all virtual environments
         local env_list="$(cd "$__VENVS_DIR" && compgen -d -- "${COMP_WORDS[2]}")"
 
         # Return raw environment list for bash completion
@@ -69,13 +69,13 @@ venv() {
     # Get environment directory path
     local -r venv_dir="$__VENVS_DIR/$name"
 
-    if [ "$cmd" == 'new' ]; then        ### NEW : create a new virtual environment
+    if [ "$cmd" == 'new' ]; then        ### NEW : Create a new virtual environment
         if [ -d "$venv_dir" ]; then
             __render red; echo "[ERROR] Virtual environment '$name' already exists!"; return 1
         fi
         python -m venv "$venv_dir" && echo "Created virtual environment: '$name'"
 
-    elif [ "$cmd" == 'del' ]; then       ### DEL : remove a virtual environment
+    elif [ "$cmd" == 'del' ]; then       ### DEL : Remove a virtual environment
         if [ ! -d "$venv_dir" ]; then
             __render red; echo "[ERROR] Virtual environment '$name' does not exist!"; return 1
         fi
@@ -83,7 +83,7 @@ venv() {
         [ "$VIRTUAL_ENV" == "$venv_dir" ] && deactivate
         rm -r "$venv_dir" || return 1
 
-    elif [ "$cmd" == 'run' ]; then      ### RUN : activate a virtual environment
+    elif [ "$cmd" == 'run' ]; then      ### RUN : Activate a virtual environment
         if [ ! -d "$venv_dir" ]; then
             __render yellow; echo "[WARN] Virtual environment '$name' does not exist!"; __render
             __user_continue "Create it?" || return 0

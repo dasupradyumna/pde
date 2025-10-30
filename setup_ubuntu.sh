@@ -1,16 +1,19 @@
 #!/bin/bash
 ########################################### UBUNTU SETUP ###########################################
+# TEST: sudo ./setup_ubuntu.sh behavior
 
 # Source all setup modules
 for module in setup/*.sh; do source "$module"; done
 
 # Global variables
-INSTALL_DIR="$HOME/.local"
+LOCAL_DIR="$HOME/.local"
+CONFIG_DIR="$HOME/.config"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
 declare -A TOOL_VERSIONS=()
 
 # Command-line options
+OPT__HEADLESS=false
 OPT__SYSTEM_SCOPE=false
 OPT__UNINSTALL=false
 
@@ -19,6 +22,7 @@ show_help() {
     echo '
 Usage: ./setup_ubuntu.sh [-hsU]
     -h : Show this help message
+    -H : Headless installation
     -s : System scope (/usr/local); if not set, fallback to user scope (~/.local)
     -U : Uninstall programs and configs
 '
@@ -28,10 +32,11 @@ Usage: ./setup_ubuntu.sh [-hsU]
 # Parse command-line options
 parse_opts() {
     # Modify variables based on options
-    OPTIND=1; while getopts ':hsU' option; do
+    OPTIND=1; while getopts ':hHsU' option; do
         case "$option" in
             h) show_help 0 ;;
-            s) OPT__SYSTEM_SCOPE=true; INSTALL_DIR=/usr/local ;;
+            H) OPT__HEADLESS=true ;;
+            s) OPT__SYSTEM_SCOPE=true; LOCAL_DIR=/usr/local ;;
             U) OPT__UNINSTALL=true ;;
             \?) log -e "Invalid command-line option '-$OPTARG'!"; show_help 1 ;;
             :) log -e "Command-line option '-$OPTARG' requires an argument!"; show_help 1 ;;
@@ -47,6 +52,7 @@ parse_opts() {
     fi
 
     log -i "Parsing command-line options ...
+    - Headless Install: $OPT__HEADLESS
     - System Scope: $OPT__SYSTEM_SCOPE
     - Uninstall: $OPT__UNINSTALL"
 }
@@ -62,13 +68,14 @@ main() {
     trap interrupt_handler INT
     trap exit_handler EXIT
     tput civis
-    mkdir "$TEMP_DIR"
+    $OPT__UNINSTALL || mkdir -p "$TEMP_DIR" "$LOCAL_DIR/bin" "$CONFIG_DIR"
 
     parse_opts $@
 
     load_version_lock
     ensure_dependencies
     manage_git
+    manage_wezterm
 
     manage_configs
 }
