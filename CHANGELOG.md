@@ -1,8 +1,31 @@
 # CHANGE LOG
 
+## 2025.2.0
+
+_Integrate WezTerm and configure its workflow._
+
+### Added
+
+- **WezTerm** [#5](https://github.com/dasupradyumna/pde/issues/5)
+  - Add custom color scheme and fonts with extended Unicode support
+  - Implement status bar with domain, workspace, battery and multiplexer latency indicators
+  - Define custom keybindings for copy, search, tab and pane actions
+  - Support for custom domains and workspaces, along with convenience helper actions
+
+- **Setup**
+  - Implement installation logic for WezTerm with improved GitHub asset download logic
+  - Add headless installation mode with configurable binary and config folders
+  - Install bash completion and context menu item Nautilus extension for WezTerm
+
+### Fixed
+
+- **Bash**
+  - Disabled `failglob` to ensure completion works correctly
+  - Unset helper variables in `init.sh` to avoid leaks
+
 ## 2025.1.1
 
-_Updated GitHub workflows for pull requests and issue labels_
+_Update GitHub workflows for pull requests and issue labels._
 
 ## 2025.1.0
 
