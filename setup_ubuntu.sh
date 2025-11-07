@@ -10,7 +10,9 @@ LOCAL_DIR="$HOME/.local"
 CONFIG_DIR="$HOME/.config"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
-declare -A TOOL_VERSIONS=()
+FREE_VERSIONS_FILE="$PWD/free.version"
+LOCK_VERSIONS_FILE="$PWD/lock.version"
+declare -A FREE_VERSIONS=() LOCK_VERSIONS=()
 
 # Command-line options
 OPT__HEADLESS=false
@@ -61,7 +63,17 @@ parse_opts() {
 interrupt_handler() { log -e "[SIGINT] User aborted the script!"; exit 130; }
 
 # Handle SIGEXIT - clean up and propagate exit code
-exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
+exit_handler() {
+    code=$?
+    if [ $code -eq 0 ]; then
+        rm "$FREE_VERSIONS_FILE.bak"
+    elif [ -f "$FREE_VERSIONS_FILE.bak" ]; then
+        mv -f "$FREE_VERSIONS_FILE.bak" "$FREE_VERSIONS_FILE"
+    fi
+    rm -rf "$TEMP_DIR"
+    tput cnorm
+    exit $code
+}
 
 main() {
     set -e
@@ -72,7 +84,7 @@ main() {
 
     parse_opts $@
 
-    load_version_lock
+    load_tool_versions
     ensure_dependencies
     manage_git
     manage_wezterm

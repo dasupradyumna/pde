@@ -54,7 +54,7 @@ __install_git() {
 # Install LazyGit if missing or not already up-to-date
 __install_lazygit() {
     echo && log -i 'Setting up LazyGit ...'
-    local -r ver="${TOOL_VERSIONS[lazygit]}"
+    local -r ver="${LOCK_VERSIONS[lazygit]}"
 
     # Check if LazyGit is already up-to-date
     local curr_ver='(none)'
@@ -79,7 +79,7 @@ __install_lazygit() {
 # Install Delta if missing or not already up-to-date
 __install_delta() {
     echo && log -i 'Setting up Delta ...'
-    local -r ver="${TOOL_VERSIONS[delta]}"
+    local -r ver="${LOCK_VERSIONS[delta]}"
 
     # Check if Delta is already up-to-date
     local curr_ver='(none)'
