@@ -73,7 +73,7 @@ __install_neovim() {
     echo && log -i 'Setting up Neovim ...'
     local -r ver="${LOCK_VERSIONS[neovim]}"
 
-    git clone -b "v$ver" --depth 1 https://github.com/neovim/neovim "$TEMP_DIR/neovim" &>/dev/null
+    git clone -b "v$ver" --depth 1 'https://github.com/neovim/neovim' "$TEMP_DIR/neovim" &>/dev/null
     log -i 'Cloned GitHub repository'
 
     cd "$TEMP_DIR/neovim"

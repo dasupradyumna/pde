@@ -13,7 +13,7 @@ manage_git() {
         exec_ring_log $SUDO apt-get install -y git
         log -i "Downgraded to Git $(git --version | awk '{print $3}')"
 
-        cd "$LOCAL_DIR/bin" && $SUDO rm -f lazygit delta git-crypt 1>/dev/null && cd ~-
+        cd "$LOCAL_DIR/bin" && $SUDO rm -f 'lazygit' 'delta' 'git-crypt' 1>/dev/null && cd ~-
         log -i 'Uninstalled LazyGit, Delta and GitCrypt binaries'
     else
         __install_git
@@ -104,26 +104,19 @@ __install_delta() {
 # Install GitCrypt if missing or not already up-to-date
 __install_gitcrypt() {
     echo && log -i 'Setting up GitCrypt ...'
+    local -r ver="${LOCK_VERSIONS[git-crypt]}"
 
     # Check if GitCrypt is already up-to-date
-    local installed latest
-    read -r installed latest < <(apt_pkg_versions git-crypt)
+    local curr_ver='(none)'
     if command -v git-crypt 1>/dev/null; then
-        installed="$(git-crypt version | awk '{print $2}')"
+        curr_ver="$(git-crypt --version | awk '{print $2}')"
     fi
-    if is_latest_installed 'git-crypt' "$installed" "$latest"; then return; fi
+    if is_latest_installed 'git-crypt' "$curr_ver" "$ver"; then return; fi
 
-    # If installation scope is system-level
-    if $OPT__SYSTEM_SCOPE; then
-        exec_ring_log $SUDO apt-get install -y "git-crypt=$latest"
-        log -i 'Installed GitCrypt (APT-system)'
-    else
-        cd "$TEMP_DIR"
-        apt download "git-crypt=$latest" &> /dev/null
-        dpkg -x "$(find -type f -name 'git-crypt*.deb')" 'git-crypt'
-        log -i 'Downloaded and extracted APT package'
-        mv 'git-crypt/usr/bin/git-crypt' "$LOCAL_DIR/bin"
-        log -i "Installed GitCrypt (APT-user)"
-        cd ~-
-    fi
+    # Download and install GitCrypt binary
+    cd "$TEMP_DIR"
+    curl_file_github 'AGWA/git-crypt' "$ver" "git-crypt-${ver}-linux-x86_64" 'git-crypt'
+    $SUDO install git-crypt -D -t "$LOCAL_DIR/bin"
+    cd ~-
+    log -i "Downloaded and installed GitCrypt v$ver binary to $LOCAL_DIR/bin"
 }
