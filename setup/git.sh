@@ -13,7 +13,7 @@ manage_git() {
         exec_ring_log $SUDO apt-get install -y git
         log -i "Downgraded to Git $(git --version | awk '{print $3}')"
 
-        cd "$LOCAL_DIR/bin" && $SUDO rm lazygit delta git-crypt 1>/dev/null && cd ~-
+        cd "$LOCAL_DIR/bin" && $SUDO rm -f lazygit delta git-crypt 1>/dev/null && cd ~-
         log -i 'Uninstalled LazyGit, Delta and GitCrypt binaries'
     else
         __install_git

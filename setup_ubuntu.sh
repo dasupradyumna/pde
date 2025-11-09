@@ -66,7 +66,7 @@ interrupt_handler() { log -e "[SIGINT] User aborted the script!"; exit 130; }
 exit_handler() {
     code=$?
     if [ $code -eq 0 ]; then
-        rm "$FREE_VERSIONS_FILE.bak"
+        rm -f "$FREE_VERSIONS_FILE.bak"
     elif [ -f "$FREE_VERSIONS_FILE.bak" ]; then
         mv -f "$FREE_VERSIONS_FILE.bak" "$FREE_VERSIONS_FILE"
     fi
@@ -85,9 +85,10 @@ main() {
     parse_opts $@
 
     load_tool_versions
-    ensure_dependencies
+    ensure_system_deps
     manage_git
     manage_wezterm
+    manage_neovim
 
     manage_configs
 }

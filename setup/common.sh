@@ -28,12 +28,12 @@ load_tool_versions() {
 }
 
 # Check if dependencies are already up-to-date, and install them if otherwise
-ensure_dependencies() {
+ensure_system_deps() {
     if $OPT__UNINSTALL; then return; fi
 
-    local -a deps=('bash-completion' 'build-essential' 'curl' 'software-properties-common')
+    local -a deps=('bash-completion' 'build-essential' 'cmake' 'curl' 'software-properties-common')
     $OPT__HEADLESS || deps+=('python3-nautilus')
-    echo && log -i 'Ensuring common dependencies are installed ...'
+    echo && log -i 'Ensuring dependencies are installed ...'
 
     # Check if dependencies are already up-to-date
     local installed latest skip_install=true
@@ -45,13 +45,12 @@ ensure_dependencies() {
     done
 
     # Skip installation if dependencies are already up-to-date
-    if $skip_install; then log -i 'All common dependencies already up-to-date'; return; fi
+    if $skip_install; then log -i 'All system dependencies already up-to-date'; return; fi
 
     # Install dependencies
     exec_ring_log $SUDO apt-get update
-    exec_ring_log $SUDO apt-get install -y bash-completion build-essential curl \
-        software-properties-common
-    log -i 'Installed common dependencies'
+    exec_ring_log $SUDO apt-get install -y ${deps[@]}
+    log -i 'Installed system dependencies'
 }
 
 declare -r BASHRC_ENTRYPOINT="
