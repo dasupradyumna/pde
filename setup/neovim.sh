@@ -82,4 +82,5 @@ __install_neovim() {
 
     exec_ring_log $SUDO make install
     log -i "Installed Neovim to $LOCAL_DIR/bin"
+    cd ~-
 }

@@ -25,7 +25,7 @@ manage_git() {
         fi
         __install_lazygit
         __install_delta
-        __install_gitcrypt
+        __install_gitcrypt # BUG: v0.8.0 not supported on Ubuntu20
     fi
 }
 
