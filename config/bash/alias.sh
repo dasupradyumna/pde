@@ -59,7 +59,7 @@ aider() {
 
     # TODO: support system-level install as well
     # FIX: change config_dir after updating setup script
-    local -r bin="$HOME/.local/bin/aider" config_dir="$HOME/projects/pde_ai/config/aider"
+    local -r bin="$HOME/.local/bin/aider" config_dir="$HOME/projects/pde/config/aider"
     local -r chat_file="$session_dir/${session_name}.md"
     "$bin" --config "$config_dir/config.yaml" \
         --env-file "$config_dir/keys.env" \
