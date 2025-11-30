@@ -30,6 +30,42 @@ alias rmd='rm -rf'
 # Set WezTerm tab title
 # alias wt='wezterm cli set-tab-title' # TODO: when installed
 
+############################# AIDER SESSION MANAGER ############################
+
+# Aider sessions directory
+__AIDER_SESSIONS_DIR="$HOME/obsidian-vault/aider-chats"
+
+aider() {
+    # Check if CWD is inside a git repository
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        __render red; echo '[ERROR] Not inside a git repository!'; return 1
+    fi
+
+    # Create session directory name from git root (@ -> @@, / -> @)
+    local session_dir="$(git rev-parse --show-toplevel)"
+    session_dir="${session_dir//@/@@}"
+    session_dir="${session_dir//\//@}"
+    session_dir="$__AIDER_SESSIONS_DIR/$session_dir"
+
+    # Get current git branch and replace / with -
+    local session_name="$(git branch --show-current)"
+    session_name="${session_name//\//-}"
+    if [ -z "$session_name" ]; then
+        __render red; echo '[ERROR] Repository in detached HEAD state!'; return 1
+    fi
+
+    # Create session directory if it doesn't exist
+    mkdir -p "$session_dir"
+
+    # TODO: support system-level install as well
+    # FIX: change config_dir after updating setup script
+    local -r bin="$HOME/.local/bin/aider" config_dir="$HOME/projects/pde_ai/config/aider"
+    local -r chat_file="$session_dir/${session_name}.md"
+    "$bin" --config "$config_dir/config.yaml" \
+        --env-file "$config_dir/keys.env" \
+        --chat-history-file "$chat_file" "$@"
+}
+
 ########################## VIRTUAL ENVIRONMENT MANAGER #########################
 
 # Virtual environments directory
