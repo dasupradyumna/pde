@@ -11,9 +11,10 @@ alias dcn='pushd +1 1>/dev/null'
 alias dcp='pushd -0 1>/dev/null'
 
 # Short-hand aliases
-# alias e='nvim' # TODO: when installed
+alias a='aider'
+alias e='nvim'
 alias g='lazygit'
-alias v='venv'
+alias o='opencode'
 
 # List permissions of file system object
 alias lmod='stat --printf "    object: %n (%F)\n    perms: (%a) %A\n"'
@@ -25,10 +26,7 @@ mkcd() { mkdir -p "$1" && cd "$1" || return 1; }
 alias rmd='rm -rf'
 
 # Copy STDIN into clipboard
-# alias xcp='xclip -selection clipboard' # TODO: when installed
-
-# Set WezTerm tab title
-# alias wt='wezterm cli set-tab-title' # TODO: when installed
+alias xcp='xclip -selection clipboard'
 
 ############################# AIDER SESSION MANAGER ############################
 
