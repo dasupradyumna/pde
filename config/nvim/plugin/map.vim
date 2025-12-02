@@ -22,6 +22,9 @@ map! <Esc> <NOP>
 " Clear search highlight
 nnoremap <Leader>/ <Cmd>nohlsearch<CR>
 
+" Close window convenience
+nnoremap <C-Q> <C-W>q
+
 "--------------------------------- NAVIGATION ---------------------------------"
 
 " Swap start-of-line and first-character
@@ -80,3 +83,27 @@ xnoremap <Leader>cc "+y
 xnoremap <Leader>cx "+d
 xnoremap <Leader>cp "+p
 xnoremap <Leader>cP "+P
+
+"----------------------------------- TABPAGE ----------------------------------"
+
+nnoremap <C-T>c <Cmd>lua require('self.tabpage').create()<CR>
+nnoremap <C-T>r <Cmd>lua require('self.tabpage').rename()<CR>
+nnoremap <C-T>q <Cmd>tabclose<CR>
+nnoremap <C-T>Q <Cmd>windo bwipeout!<CR>
+nnoremap <C-T>o <Cmd>tabonly<CR>
+
+" Tab navigation and ordering
+nnoremap <C-T>p <Cmd>tabnext #<CR>
+nnoremap <C-T>h <Cmd>tabprevious<CR>
+nnoremap <C-T>j <Cmd>lua require('self.tabpage').move('-')<CR>
+nnoremap <C-T>k <Cmd>lua require('self.tabpage').move('+')<CR>
+nnoremap <C-T>l <Cmd>tabnext<CR>
+nnoremap <C-T>1 <Cmd>tabnext 1<CR>
+nnoremap <C-T>2 <Cmd>tabnext 2<CR>
+nnoremap <C-T>3 <Cmd>tabnext 3<CR>
+nnoremap <C-T>4 <Cmd>tabnext 4<CR>
+nnoremap <C-T>5 <Cmd>tabnext 5<CR>
+nnoremap <C-T>6 <Cmd>tabnext 6<CR>
+nnoremap <C-T>7 <Cmd>tabnext 7<CR>
+nnoremap <C-T>8 <Cmd>tabnext 8<CR>
+nnoremap <C-T>9 <Cmd>tabnext 9<CR>

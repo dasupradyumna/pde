@@ -34,6 +34,7 @@ function! s:session_manager.save()
     if self.disabled | return | endif
     if s:is_current_session_empty() | call self.delete() | return | endif
 
+    lua require('self.tabpage').save_to_global()
     execute 'mksession!' fnameescape(self.file)
     call s:notify('info', printf('Session saved (%s)', getcwd(-1, -1)))
 endfunction

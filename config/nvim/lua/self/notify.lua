@@ -1,6 +1,6 @@
 --------------------------------------- NOTIFICATION MANAGER ---------------------------------------
 
-local M = {}
+local notify = {}
 
 --- Helper function to notify with a specific log level and prefix
 --- @param level number The vim.log.levels value
@@ -10,14 +10,14 @@ local function notify_with_level(level, prefix, message) vim.notify(prefix .. me
 
 --- Display an info notification
 --- @param message string The message to display
-function M.info(message) notify_with_level(vim.log.levels.INFO, '[INFO] ', message) end
+function notify.info(message) notify_with_level(vim.log.levels.INFO, '[INFO] ', message) end
 
 --- Display a warn notification
 --- @param message string The message to display
-function M.warn(message) notify_with_level(vim.log.levels.WARN, '[WARN] ', message) end
+function notify.warn(message) notify_with_level(vim.log.levels.WARN, '[WARN] ', message) end
 
 --- Display an error notification
 --- @param message string The message to display
-function M.error(message) notify_with_level(vim.log.levels.ERROR, '[ERROR] ', message) end
+function notify.error(message) notify_with_level(vim.log.levels.ERROR, '[ERROR] ', message) end
 
-return M
+return notify
