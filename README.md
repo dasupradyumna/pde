@@ -10,6 +10,7 @@ maximum efficiency and productivity.
 - **Git Tools**: LazyGit (0.54.2) + Delta (0.18.2) for enhanced git workflow
 - **Custom Bash**: Aliases, prompts, and utilities for productivity
 - **WezTerm**: Terminal multiplexer with custom theme and keybindings
+- **Neovim**: TUI Editor with support for LSP, treesitter and extensibility
 
 ## Installation
 
@@ -31,7 +32,7 @@ locked using `version.lock` file for reproducible release builds.
 ./setup_ubuntu.sh -s
 
 # Install headless
-./setup_ubuntu.sh -h
+./setup_ubuntu.sh -H
 
 # Uninstall
 ./setup_ubuntu.sh -U
@@ -40,13 +41,15 @@ locked using `version.lock` file for reproducible release builds.
 ## Project Structure
 
 ```
-├── setup/           # Modular installation modules
 ├── config/          # Tool configurations
+│   ├── aider/       # AI coding agent
 │   ├── bash/        # Custom bash environment
 │   ├── delta/       # Delta diff enhancer
 │   ├── git/         # Git version control
 │   ├── lazygit/     # LazyGit git helper
+│   ├── nvim/        # Neovim editor
 │   └── wezterm/     # WezTerm multiplexer
+├── setup/           # Modular installation modules
 ├── setup_ubuntu.sh  # Main installation script
-└── version.lock     # Tool version specifications
+└── lock.version     # Tool version specifications
 ```
