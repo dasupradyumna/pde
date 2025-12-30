@@ -1,0 +1,2 @@
+config/aider/keys.env filter=git-crypt diff=git-crypt
+config/bash/_vimaan_helpers.sh filter=git-crypt diff=git-crypt

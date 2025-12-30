@@ -20,23 +20,38 @@ curl_file_github() {
 # Usage: exec_ring_log <cmd> [<args> ...]
 exec_ring_log() {
     local -r cmd="$@" BUFFERSIZE=15
-    local buffer=()
-    tput sc # save-cursor at current position
+    local lines=() n_rows_per_line=() total_rows=1
+
+    rm -f "$FIFO_FILE"
+    mkfifo "$FIFO_FILE"
+    $cmd &>"$FIFO_FILE" &
+    cmd_pid=$!
 
     # Execute and pipe output to render last BUFFERSIZE lines
-    $cmd 2>&1 | while IFS= read -r line
-    do
-        buffer+=("$line")
-        [ ${#buffer[@]} -gt $BUFFERSIZE ] && buffer=("${buffer[@]:1}")
-        # BUG: breaks when cursor < BUFFERSIZE lines from screen bottom
-        tput rc; tput ed # restore-cursor, erase-down
-        echo && printf '\e[90m%s\e[m\r\n' "${buffer[@]}"
-        sleep 0.1
-    done || { log -eW "Log rendering failed! '$cmd'"; return 1; }
-    [ ${PIPESTATUS[0]} -ne 0 ] && { log -eW "Command failed! '$cmd'"; return 1; }
+    printf '\e[90m\n' # Color:bright-black
+    while IFS= read -r line; do
+        printf "\e[${total_rows}A" # Cursor-up N rows
 
-    # Restore cursor to position before rolling logs
-    tput rc; tput ed
+        # Strip ANSI color sequences and handles TAB/CR characters
+        line="$(sed -e 's/\x1b\[[0-9;]*m//g' -e $'s/\t/        /g' -E -e $'s/\r+$//' <<< "$line")"
+        line=" >> ${line##*$'\r'}"
+        lines+=("$line")
+        n_rows_per_line+=($(((${#line} + $COLUMNS - 1) / $COLUMNS)))
+        total_rows=$((total_rows + ${n_rows_per_line[-1]}))
+
+        # Rotate logs when buffer is full
+        if [ ${#lines[@]} -gt $BUFFERSIZE ]; then
+            total_rows=$((total_rows - ${n_rows_per_line[0]}))
+            n_rows_per_line=("${n_rows_per_line[@]:1}")
+            lines=("${lines[@]:1}")
+        fi
+
+        printf '\e[J\n' # Erase-down
+        printf '%s\r\n' "${lines[@]}"
+    done < "$FIFO_FILE" || { log -eW "Log rendering failed! '$cmd'"; return 1; }
+
+    wait "$cmd_pid" || { log -eW "Command failed! '$cmd'"; return 1; }
+    printf "\e[${total_rows}A\e[J\e[m" # Cursor-up N rows + Erase-down + Color:white
 }
 
 # Check if a package is already up-to-date

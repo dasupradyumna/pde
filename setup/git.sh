@@ -13,8 +13,8 @@ manage_git() {
         exec_ring_log $SUDO apt-get install -y git
         log -i "Downgraded to Git $(git --version | awk '{print $3}')"
 
-        cd "$LOCAL_DIR/bin" && $SUDO rm lazygit delta 1>/dev/null && cd ~-
-        log -i 'Uninstalled LazyGit and Delta binaries'
+        cd "$LOCAL_DIR/bin" && $SUDO rm -f 'lazygit' 'delta' 'git-crypt' 1>/dev/null && cd ~-
+        log -i 'Uninstalled LazyGit, Delta and GitCrypt binaries'
     else
         __install_git
         # Needs to be checked manually, since post-checkout hook may not be set up yet
@@ -25,6 +25,7 @@ manage_git() {
         fi
         __install_lazygit
         __install_delta
+        __install_gitcrypt # BUG: v0.8.0 not supported on Ubuntu20
     fi
 }
 
@@ -53,7 +54,7 @@ __install_git() {
 # Install LazyGit if missing or not already up-to-date
 __install_lazygit() {
     echo && log -i 'Setting up LazyGit ...'
-    local -r ver="${TOOL_VERSIONS[lazygit]}"
+    local -r ver="${LOCK_VERSIONS[lazygit]}"
 
     # Check if LazyGit is already up-to-date
     local curr_ver='(none)'
@@ -78,12 +79,12 @@ __install_lazygit() {
 # Install Delta if missing or not already up-to-date
 __install_delta() {
     echo && log -i 'Setting up Delta ...'
-    local -r ver="${TOOL_VERSIONS[delta]}"
+    local -r ver="${LOCK_VERSIONS[delta]}"
 
     # Check if Delta is already up-to-date
     local curr_ver='(none)'
     if command -v delta 1>/dev/null; then
-        curr_ver="$( delta --version | awk '{print $2}')"
+        curr_ver="$(delta --version | awk '{print $2}')"
     fi
     if is_latest_installed 'delta' "$curr_ver" "$ver"; then return; fi
 
@@ -98,4 +99,24 @@ __install_delta() {
     $SUDO install "$pkg/delta" -D -t "$LOCAL_DIR/bin"
     cd ~-
     log -i "Installed Delta to $LOCAL_DIR/bin"
+}
+
+# Install GitCrypt if missing or not already up-to-date
+__install_gitcrypt() {
+    echo && log -i 'Setting up GitCrypt ...'
+    local -r ver="${LOCK_VERSIONS[git-crypt]}"
+
+    # Check if GitCrypt is already up-to-date
+    local curr_ver='(none)'
+    if command -v git-crypt 1>/dev/null; then
+        curr_ver="$(git-crypt --version | awk '{print $2}')"
+    fi
+    if is_latest_installed 'git-crypt' "$curr_ver" "$ver"; then return; fi
+
+    # Download and install GitCrypt binary
+    cd "$TEMP_DIR"
+    curl_file_github 'AGWA/git-crypt' "$ver" "git-crypt-${ver}-linux-x86_64" 'git-crypt'
+    $SUDO install git-crypt -D -t "$LOCAL_DIR/bin"
+    cd ~-
+    log -i "Downloaded and installed GitCrypt v$ver binary to $LOCAL_DIR/bin"
 }

@@ -10,7 +10,10 @@ LOCAL_DIR="$HOME/.local"
 CONFIG_DIR="$HOME/.config"
 SUDO="$([ $(id -u) -ne 0 ] && printf sudo || echo -n)"
 TEMP_DIR="$PWD/tmp"
-declare -A TOOL_VERSIONS=()
+FIFO_FILE="/tmp/tmp.pde_fifo"
+FREE_VERSIONS_FILE="$PWD/free.version"
+LOCK_VERSIONS_FILE="$PWD/lock.version"
+declare -A FREE_VERSIONS=() LOCK_VERSIONS=()
 
 # Command-line options
 OPT__HEADLESS=false
@@ -58,10 +61,20 @@ parse_opts() {
 }
 
 # Handle SIGINT - exit with code 130 = 128 + 2 (SIGINT)
-interrupt_handler() { log -e "[SIGINT] User aborted the script!"; exit 130; }
+interrupt_handler() { tput ed; log -e "[SIGINT] User aborted the script!"; exit 130; }
 
 # Handle SIGEXIT - clean up and propagate exit code
-exit_handler() { code=$?; tput cnorm; rm -rf "$TEMP_DIR"; exit $code; }
+exit_handler() {
+    code=$?
+    if [ $code -eq 0 ]; then
+        rm -f "$FREE_VERSIONS_FILE.bak"
+    elif [ -f "$FREE_VERSIONS_FILE.bak" ]; then
+        mv -f "$FREE_VERSIONS_FILE.bak" "$FREE_VERSIONS_FILE"
+    fi
+    rm -rf "$TEMP_DIR" "$FIFO_FILE"
+    tput cnorm
+    exit $code
+}
 
 main() {
     set -e
@@ -72,10 +85,11 @@ main() {
 
     parse_opts $@
 
-    load_version_lock
-    ensure_dependencies
+    load_tool_versions
+    ensure_system_deps
     manage_git
     manage_wezterm
+    manage_neovim
 
     manage_configs
 }

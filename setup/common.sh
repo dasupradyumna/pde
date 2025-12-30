@@ -1,41 +1,56 @@
 ######################################## COMMON SETUP LOGIC ########################################
 
-# Load tool versions from version.lock file
-load_version_lock() {
-    if $OPT__UNINSTALL; then return; fi
-
+# Read tool names and their version from a file
+#
+# Usage: __read_versions_file <file> <dict>
+__read_versions_file() {
+    local -r file="$1" dict="$2"
     while read -r tool version; do
         if [ -z "$tool" ] || [ -z "$version" ] || [ "${tool:0:1}" == '#' ]; then continue; fi
+        eval "$dict[$tool]=$version"
+    done < "$file"
+}
 
-        TOOL_VERSIONS["$tool"]="$version"
-    done < "$PWD/version.lock"
+# Load tool versions - locked and/or free
+load_tool_versions() {
+    if $OPT__UNINSTALL; then return; fi
 
-    log -i 'Loaded tool versions from version.lock'
+    __read_versions_file "$LOCK_VERSIONS_FILE" LOCK_VERSIONS
+    log -i "Loaded locked versions from '$(basename "$LOCK_VERSIONS_FILE")'"
+
+    if [ -f "$FREE_VERSIONS_FILE" ]; then
+        __read_versions_file "$FREE_VERSIONS_FILE" FREE_VERSIONS
+        # Back-up existing free versions file
+        cp "$FREE_VERSIONS_FILE" "$FREE_VERSIONS_FILE.bak"
+        log -i "Loaded free versions from '$(basename "$FREE_VERSIONS_FILE")'"
+    fi
+    echo -e "####################### FREE VERSIONS ######################\n" > "$FREE_VERSIONS_FILE"
 }
 
 # Check if dependencies are already up-to-date, and install them if otherwise
-ensure_dependencies() {
+ensure_system_deps() {
     if $OPT__UNINSTALL; then return; fi
 
-    local -a deps=('bash-completion' 'build-essential' 'curl' 'software-properties-common')
+    local -a deps=('bash-completion' 'build-essential' 'cmake' 'curl' 'software-properties-common')
     $OPT__HEADLESS || deps+=('python3-nautilus')
-    echo && log -i 'Ensuring common dependencies are installed ...'
+    echo && log -i 'Ensuring dependencies are installed ...'
 
     # Check if dependencies are already up-to-date
     local installed latest skip_install=true
     for dep in "${deps[@]}"; do
         read -r installed latest < <(apt_pkg_versions "$dep")
+        installed="${FREE_VERSIONS[$dep]:-(none)}"
+        echo "$dep    $latest" >> "$FREE_VERSIONS_FILE"
         if ! is_latest_installed "$dep" "$installed" "$latest"; then skip_install=false; fi
     done
 
     # Skip installation if dependencies are already up-to-date
-    if $skip_install; then log -i 'All common dependencies already up-to-date'; return; fi
+    if $skip_install; then log -i 'All system dependencies already up-to-date'; return; fi
 
     # Install dependencies
     exec_ring_log $SUDO apt-get update
-    exec_ring_log $SUDO apt-get install -y bash-completion build-essential curl \
-        software-properties-common
-    log -i 'Installed common dependencies'
+    exec_ring_log $SUDO apt-get install -y ${deps[@]}
+    log -i 'Installed system dependencies'
 }
 
 declare -r BASHRC_ENTRYPOINT="
@@ -54,7 +69,7 @@ manage_configs() {
     fi
 
     # Manage tool config symlinks
-    local -a tools=(delta git lazygit)
+    local -a tools=(delta git lazygit nvim)
     $OPT__HEADLESS || tools+=(wezterm)
     for tool in "${tools[@]}"; do
         if $OPT__UNINSTALL; then

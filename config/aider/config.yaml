@@ -1,0 +1,46 @@
+##################################### AIDER CHAT CONFIGURATION #####################################
+
+# Git settings
+dirty-commits: false
+watch-files: true
+attribute-author: false
+attribute-committer: false
+attribute-co-authored-by: false
+
+# Editor settings
+vim: true
+editor: nvim
+input-history-file: /dev/null # Do not save input history
+restore-chat-history: true
+
+# Model settings
+model: sonnet
+editor-model: sonnet
+weak-model: haiku
+alias:
+  - haiku:anthropic/claude-haiku-4-5
+  - sonnet:anthropic/claude-sonnet-4-5
+  - opus:anthropic/claude-opus-4-1
+edit-format: diff
+editor-edit-format: diff
+
+# Cache prompt for better cost savings and lower latency
+cache-prompts: true
+cache-keepalive-pings: 3 # 5mins x 3 = 15 mins total
+
+# Output settings
+# BUG: this flag makes aider ignore color settings (#3163)
+# dark-mode: true
+stream: false # To display token usage
+
+# Color settings
+user-input-color: '#7ac098'
+tool-output-color: '#80a6c0'
+tool-warning-color: '#ff9d57'
+tool-error-color: '#fa4d56'
+assistant-output-color: '#adb5bd'
+completion-menu-color: '#878d96'
+completion-menu-bg-color: '#212121'
+completion-menu-current-color: '#c1c7cd'
+completion-menu-current-bg-color: '#434343'
+code-theme: lightbulb

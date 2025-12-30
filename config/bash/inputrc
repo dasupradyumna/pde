@@ -24,12 +24,10 @@ set keymap vi-insert
 "\C-F": forward-search-history
 "\C-B": reverse-search-history
 "\C-V": quoted-insert
-"\C-U": kill-whole-line
+"\C-W": unix-word-rubout
+"\C-U": unix-line-discard
 "\C-Q": abort
 "\C-E": edit-and-execute-command
-"\C-X": possible-completions
-"\t": menu-complete
-"\e[Z": menu-complete-backward
 "\C-S": vi-movement-mode
 set keymap vi-command
 "\C-W":
