@@ -5,7 +5,7 @@ manage_neovim() {
     if $OPT__UNINSTALL; then
         cd "$LOCAL_DIR"
         $SUDO rm -rf 'bin/ripgrep' 'bin/xclip'
-        log -i 'Uninstalled RipGrep and XClip'
+        echo && log -i 'Uninstalled RipGrep and XClip'
 
         $SUDO rm -rf 'bin/nvim' 'lib/nvim' 'share/nvim/runtime' 'share/man/man1/nvim.1'
         log -i 'Uninstalled Neovim'
@@ -24,7 +24,7 @@ __install_ripgrep() {
 
     # Check if RipGrep is already up-to-date
     local curr_ver='(none)'
-    if command -v rg 1>/dev/null; then
+    if has_cmd rg; then
         curr_ver="$(rg --version | awk 'NR==1 {print $2}')"
     fi
     if is_latest_installed 'ripgrep' "$curr_ver" "$ver"; then return; fi

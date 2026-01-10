@@ -20,7 +20,7 @@ __install_aider() {
     local -r bin="$LOCAL_DIR/bin/aider"
 
     # Update if Aider is already installed
-    if command -v aider 1>/dev/null; then
+    if has_cmd aider; then
         log -i 'Aider already installed'
         exec_ring_log "$bin" --update --yes-always
         log -i "Updated Aider to v$("$bin" --version | awk '{print $2}')"
@@ -48,7 +48,7 @@ __install_opencode() {
     local -r bin="$LOCAL_DIR/bin/opencode"
 
     # Update if OpenCode is already installed
-    if command -v opencode 1>/dev/null; then
+    if has_cmd opencode; then
         log -i 'OpenCode already installed'
         exec_ring_log "$bin" upgrade
         log -i "Updated OpenCode to v$("$bin" --version)"
