@@ -10,11 +10,23 @@ function! s:trim_trailing_whitespace()
     call winrestview(view)
 endfunction
 
+" Toggle cursorline locally based on argument
+const s:cursorline_exclude = []
+function! s:toggle_cursorline(enable)
+    if s:cursorline_exclude->index(&l:filetype) >= 0 | return | endif
+
+    if a:enable | setlocal cursorline | else | setlocal nocursorline | endif
+endfunction
+
 augroup __user__
     autocmd!
 
     " Trim trailing whitespace just before saving
     autocmd BufWritePre * call s:trim_trailing_whitespace()
+
+    " Enable cursorline only in current window
+    autocmd VimEnter,WinEnter * call s:toggle_cursorline(v:true)
+    autocmd WinLeave * call s:toggle_cursorline(v:false)
 
 "----------------------------------- TABPAGE ----------------------------------"
 

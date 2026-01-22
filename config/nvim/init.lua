@@ -12,3 +12,6 @@ vim.filetype.add {
   filename = { ['docker.build-args'] = 'sh' },
   extension = { launch = 'xml' },
 }
+
+-- Temporary colorscheme
+vim.cmd.colorscheme 'habamax'
