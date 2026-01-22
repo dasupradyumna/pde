@@ -40,7 +40,4 @@ augroup __user__
                 \     call v:lua.require('self.tabpage').update_name_list() |
                 \ endif
 
-    " Restore previous session tabpage names
-    autocmd SessionLoadPost * lua require('self.tabpage').load_from_global()
-
 augroup END

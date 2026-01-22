@@ -48,6 +48,7 @@ function! s:session_manager.load()
     silent %bwipeout!
     try
         execute 'silent source' fnameescape(self.file)
+        lua require('self.tabpage').load_from_global()
         call s:notify('info', printf('Session loaded (%s)', getcwd(-1, -1)))
     catch
         let self.disabled = v:true
