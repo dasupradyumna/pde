@@ -1,0 +1,17 @@
+////////////////////////////////////// OPENCODE CONFIGURATION //////////////////////////////////////
+
+{
+    "tui": { "scroll_acceleration": { "enabled": true } },
+    // "provider": {},
+    "model": "opencode/claude-sonnet-4-5",
+    "small_model": "opencode/claude-haiku-4-5",
+    "permission": {
+        "bash": { "*": "ask", "git *": "deny" },
+        "list": { "*": "deny", "~/*": "allow" }
+    },
+    "agent": {
+        "build": { "disable": true },
+        "plan": { "disable": true }
+    },
+    "default_agent": "tag-resolve"
+}
