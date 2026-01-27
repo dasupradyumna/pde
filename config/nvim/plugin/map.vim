@@ -26,11 +26,16 @@ nnoremap <Leader>/ <Cmd>nohlsearch<CR>
 nnoremap <C-Q> <C-W>q
 nnoremap <Leader>q <Cmd>qall<CR>
 
-" Wipe all buffers
-nnoremap <Leader>bw <Cmd>%bwipeout<CR>
+" Rotate windows
+nnoremap <C-R> <C-W>r
 
-" Save buffer
+" Wipe buffers
+nnoremap <Leader>bw <Cmd>bwipeout<CR>
+nnoremap <Leader>bW <Cmd>%bwipeout<CR>
+
+" Save buffers
 nnoremap <Leader>bs <Cmd>write<CR>
+nnoremap <Leader>bS <Cmd>wall<CR>
 
 "--------------------------------- NAVIGATION ---------------------------------"
 
@@ -70,7 +75,6 @@ nnoremap gd K
 
 " Cleaner undo-redo flow (remove undo-line)
 nnoremap U <C-R>
-nnoremap <C-R> <NOP>
 
 " Cursor movement in insert mode
 " - <C-G>U prevents undo block creation on line breaks
