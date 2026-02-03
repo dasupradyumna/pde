@@ -24,16 +24,19 @@ function! s:ensure_buf_exists() abort
     const buf = nvim_create_buf(v:false, v:true)
     let s:buf_nr = buf
     call nvim_buf_set_name(buf, s:scratch_file)
-    call nvim_buf_set_lines(buf, 0, -1, v:false, readfile(s:scratch_file))
+    const contents = filereadable(s:scratch_file) ? readfile(s:scratch_file) : []
+    call nvim_buf_set_lines(buf, 0, -1, v:false, contents)
 
     const curr = bufnr('%')
     keepalt call nvim_win_set_buf(0, buf)
     " Ensure scratch buffer has normal editing options
-    setlocal swapfile modifiable filetype=markdown
+    setlocal swapfile buftype= filetype=markdown
     " Keymap to rotate scratch float between left and right positions
     nnoremap <buffer> <C-R> <Cmd>call <SID>rotate_win_config()<CR>
     " Autocommand to clear cached scratch buffer and float IDs
     autocmd BufWipeout <buffer> let s:buf_nr = 0 | let s:win_id = 0
+    " Save changes to scratch automatically - user need not save
+    autocmd CursorHold,CursorHoldI <buffer> silent write!
     keepalt call nvim_win_set_buf(0, curr)
 endfunction
 
