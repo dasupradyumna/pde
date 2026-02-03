@@ -9,6 +9,13 @@ set sessionoptions=buffers,folds,globals,help,tabpages,winsize
 set shada=!,'100,<10,h,s10
 " XXX: continue with usr_21
 
+" fold method
+" TODO: display foldcolumn in statuscolumn
+set foldexpr=v:lua.vim.treesitter.foldexpr()
+set foldlevelstart=99
+set foldopen+=insert,jump
+set foldtext=
+
 " edit formatting
 set backspace+=nostop
 set expandtab

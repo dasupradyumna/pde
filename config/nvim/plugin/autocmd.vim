@@ -18,6 +18,14 @@ function! s:toggle_cursorline(enable)
     if a:enable | setlocal cursorline | else | setlocal nocursorline | endif
 endfunction
 
+" Enable treesitter in buffer if filetype is supported
+function! s:enable_treesitter(filetype)
+    if !v:lua.vim.treesitter.language.add(a:filetype) | return | endif
+
+    lua vim.treesitter.start()
+    setlocal foldmethod=expr
+endfunction
+
 augroup __user__
     autocmd!
 
@@ -27,6 +35,9 @@ augroup __user__
     " Enable cursorline only in current window
     autocmd VimEnter,WinEnter * call s:toggle_cursorline(v:true)
     autocmd WinLeave * call s:toggle_cursorline(v:false)
+
+    " Try to enable treesitter on filetype
+    autocmd FileType * call s:enable_treesitter(expand('<amatch>'))
 
 "----------------------------------- TABPAGE ----------------------------------"
 
