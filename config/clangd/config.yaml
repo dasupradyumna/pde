@@ -1,0 +1,25 @@
+####################################### CLANGD CONFIGURATION #######################################
+# Reference: https://clangd.llvm.org/config
+
+# NOTE: if clang system headers are not desirable
+# CompileFlags:
+#   # Because clangd is stupid and passes its CLI option to clang (which does not support it)
+#   Remove: [--query-driver=/usr/bin/c++]
+#   BuiltinHeaders: QueryDriver
+
+Diagnostics:
+  # ClangTidy:
+  #   Add:
+  #   Remove:
+  MissingIncludes: Strict
+# # NOTE: This will supported from clangd-22
+# Completion:
+#   MacroFilter: FuzzyMatch
+InlayHints:
+  BlockEnd: true
+  DefaultArguments: true
+Hover:
+  ShowAKA: true
+# # NOTE: This will supported from clangd-22
+# Documentation:
+#   CommentFormat: Doxygen
