@@ -118,25 +118,30 @@ return {
             },
         },
         cmdline = {
-            keymap = { preset = 'inherit' },
+            keymap = {
+                preset = 'inherit',
+                ['<C-N>'] = { 'select_next', 'fallback' },
+                ['<C-P>'] = { 'select_prev', 'fallback' },
+            },
             completion = {
                 list = { selection = { preselect = false } },
                 menu = { auto_show = true },
             },
         },
-        term = {
-            enabled = true,
-            keymap = {
-                ['<C-N>'] = { 'select_next', 'fallback' },
-                ['<C-P>'] = { 'select_prev', 'fallback' }
-            },
-            sources = { 'buffer', 'path' },
-            completion = {
-                list = { selection = { preselect = false, auto_insert = true } },
-                menu = { auto_show = true },
-                -- ghost_text = { enabled = true }, -- XXX: cannot cycle through items as of now.
-            },
-        },
+        -- NOTE: not very useful, and buggy in TUI apps since cursor does not define typing position
+        -- term = {
+        --     enabled = true,
+        --     keymap = {
+        --         ['<C-N>'] = { 'select_next', 'fallback' },
+        --         ['<C-P>'] = { 'select_prev', 'fallback' },
+        --     },
+        --     sources = { 'buffer', 'path' },
+        --     completion = {
+        --         list = { selection = { preselect = false, auto_insert = true } },
+        --         menu = { auto_show = true },
+        --         -- ghost_text = { enabled = true }, -- XXX: cannot cycle through items as of now.
+        --     },
+        -- },
     },
     opts_extend = { 'source.default' },
 }
