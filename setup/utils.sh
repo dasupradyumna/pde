@@ -54,6 +54,14 @@ exec_ring_log() {
     printf "\e[${total_rows}A\e[J\e[m" # Cursor-up N rows + Erase-down + Color:white
 }
 
+# Check if a command is available
+#
+# Usage: has_cmd <command>
+has_cmd() {
+    command -v "$1" &>/dev/null
+    return $?
+}
+
 # Check if a package is already up-to-date
 #
 # Usage: is_latest_installed <package_name> <installed_version> <latest_version>

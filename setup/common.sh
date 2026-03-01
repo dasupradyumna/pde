@@ -69,7 +69,7 @@ manage_configs() {
     fi
 
     # Manage tool config symlinks
-    local -a tools=(delta git lazygit nvim)
+    local -a tools=(aider clangd delta gdb git lazygit nvim opencode)
     $OPT__HEADLESS || tools+=(wezterm)
     for tool in "${tools[@]}"; do
         if $OPT__UNINSTALL; then

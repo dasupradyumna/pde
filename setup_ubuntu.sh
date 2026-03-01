@@ -89,6 +89,7 @@ main() {
     ensure_system_deps
     manage_git
     manage_wezterm
+    manage_ai_agents
     manage_neovim
 
     manage_configs

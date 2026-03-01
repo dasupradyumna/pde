@@ -21,7 +21,7 @@ manage_wezterm() {
 
         # Check if WezTerm is already up-to-date
         local curr_ver='(none)'
-        if command -v wezterm 1>/dev/null; then
+        if has_cmd wezterm; then
             curr_ver="$(wezterm --version | awk '{print $2}')"
         fi
         local -r ver="$("$TEMP_DIR/squashfs-root/AppRun" --version | awk '{print $2}')"
@@ -39,7 +39,7 @@ manage_wezterm() {
 
         # Setup bash completion
         mkdir -p "$LOCAL_DIR/share/bash-completion/completions"
-        wezterm shell-completion --shell bash > \
+        "$LOCAL_DIR/bin/wezterm" shell-completion --shell bash > \
             "$LOCAL_DIR/share/bash-completion/completions/wezterm"
         log -i "Installed WezTerm bash completion to $LOCAL_DIR/share"
 

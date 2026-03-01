@@ -7,10 +7,11 @@ maximum efficiency and productivity.
 ## Components
 
 - **Automated Setup**: One-command installation with version locking
-- **Git Tools**: LazyGit (0.54.2) + Delta (0.18.2) for enhanced git workflow
+- **Git Tools**: LazyGit + Delta for enhanced git workflow
 - **Custom Bash**: Aliases, prompts, and utilities for productivity
 - **WezTerm**: Terminal multiplexer with custom theme and keybindings
 - **Neovim**: TUI Editor with support for LSP, treesitter and extensibility
+- **AI**: Support for Aider and OpenCode AI chat coding agents
 
 ## Installation
 
@@ -44,10 +45,13 @@ locked using `version.lock` file for reproducible release builds.
 ├── config/          # Tool configurations
 │   ├── aider/       # AI coding agent
 │   ├── bash/        # Custom bash environment
+│   ├── clangd/      # C++ language server
 │   ├── delta/       # Delta diff enhancer
+│   ├── gdb/         # GNU debugger
 │   ├── git/         # Git version control
 │   ├── lazygit/     # LazyGit git helper
 │   ├── nvim/        # Neovim editor
+│   ├── opencode/    # Open source AI chat agent
 │   └── wezterm/     # WezTerm multiplexer
 ├── setup/           # Modular installation modules
 ├── setup_ubuntu.sh  # Main installation script

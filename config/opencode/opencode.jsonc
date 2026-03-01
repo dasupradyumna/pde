@@ -1,0 +1,14 @@
+////////////////////////////////// OPENCODE: RUNTIME CONFIGURATION /////////////////////////////////
+
+{
+    "$schema": "https://opencode.ai/config.json",
+    // "providers": {},
+    "model": "openai/gpt-5.1-codex",
+    "small_model": "opencode/claude-haiku-4-5",
+    "permission": {
+        "bash": { "*": "ask", "git *": "deny" },
+        "list": "allow"
+    },
+    "agent": { "plan": { "disable": true } },
+    "default_agent": "build"
+}

@@ -112,9 +112,10 @@ function tabpage.save_to_global() vim.g.TabpageNames = vim.json.encode(tabpage.n
 function tabpage.load_from_global()
   local ok, names_to_load = pcall(vim.json.decode, vim.g.TabpageNames)
   if not ok then
-    require('self.notify').error('Failed to parse JSON: ' .. vim.g.TabpageNames)
+    require('self.notify').error('Failed to parse JSON: ' .. vim.inspect(vim.g.TabpageNames))
     return
   end
+  vim.g.TabpageNames = nil
   tabpage.names = names_to_load
   vim.iter(ipairs(tabpage.names)):each(tabpage.set_name)
 end

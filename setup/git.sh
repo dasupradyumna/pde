@@ -58,7 +58,7 @@ __install_lazygit() {
 
     # Check if LazyGit is already up-to-date
     local curr_ver='(none)'
-    if command -v lazygit 1>/dev/null; then
+    if has_cmd lazygit; then
         curr_ver="$(lazygit -v | awk -F'version=' '{print $2}' | awk -F',' '{print $1}')"
     fi
     if is_latest_installed 'lazygit' "$curr_ver" "$ver"; then return; fi
@@ -83,7 +83,7 @@ __install_delta() {
 
     # Check if Delta is already up-to-date
     local curr_ver='(none)'
-    if command -v delta 1>/dev/null; then
+    if has_cmd delta; then
         curr_ver="$(delta --version | awk '{print $2}')"
     fi
     if is_latest_installed 'delta' "$curr_ver" "$ver"; then return; fi
@@ -108,7 +108,7 @@ __install_gitcrypt() {
 
     # Check if GitCrypt is already up-to-date
     local curr_ver='(none)'
-    if command -v git-crypt 1>/dev/null; then
+    if has_cmd git-crypt; then
         curr_ver="$(git-crypt --version | awk '{print $2}')"
     fi
     if is_latest_installed 'git-crypt' "$curr_ver" "$ver"; then return; fi

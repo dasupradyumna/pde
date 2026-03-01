@@ -13,8 +13,8 @@ noremap ' `
 noremap ` '
 
 " Replace <Esc> with <C-;> - more uniform across modes
-noremap <C-;> <C-\><C-n>
-noremap! <C-;> <C-\><C-n>
+noremap <C-;> <Esc>
+noremap! <C-;> <Esc>
 tnoremap <C-;> <C-\><C-n>
 map <Esc> <NOP>
 map! <Esc> <NOP>
@@ -24,6 +24,18 @@ nnoremap <Leader>/ <Cmd>nohlsearch<CR>
 
 " Close window convenience
 nnoremap <C-Q> <C-W>q
+nnoremap <Leader>q <Cmd>qall<CR>
+
+" Rotate windows
+nnoremap <C-R> <C-W>r
+
+" Wipe buffers
+nnoremap <Leader>bw <Cmd>bwipeout<CR>
+nnoremap <Leader>bW <Cmd>%bwipeout<CR>
+
+" Save buffers
+nnoremap <Leader>bs <Cmd>write<CR>
+nnoremap <Leader>bS <Cmd>wall<CR>
 
 "--------------------------------- NAVIGATION ---------------------------------"
 
@@ -63,7 +75,6 @@ nnoremap gd K
 
 " Cleaner undo-redo flow (remove undo-line)
 nnoremap U <C-R>
-nnoremap <C-R> <NOP>
 
 " Cursor movement in insert mode
 " - <C-G>U prevents undo block creation on line breaks
@@ -86,24 +97,24 @@ xnoremap <Leader>cP "+P
 
 "----------------------------------- TABPAGE ----------------------------------"
 
-nnoremap <C-T>c <Cmd>lua require('self.tabpage').create()<CR>
-nnoremap <C-T>r <Cmd>lua require('self.tabpage').rename()<CR>
-nnoremap <C-T>q <Cmd>tabclose<CR>
-nnoremap <C-T>Q <Cmd>windo bwipeout!<CR>
-nnoremap <C-T>o <Cmd>tabonly<CR>
+nnoremap <Leader>tc <Cmd>lua require('self.tabpage').create()<CR>
+nnoremap <Leader>tr <Cmd>lua require('self.tabpage').rename()<CR>
+nnoremap <Leader>tq <Cmd>tabclose<CR>
+nnoremap <Leader>tQ <Cmd>windo bwipeout!<CR>
+nnoremap <Leader>to <Cmd>tabonly<CR>
 
 " Tab navigation and ordering
-nnoremap <C-T>p <Cmd>tabnext #<CR>
-nnoremap <C-T>h <Cmd>tabprevious<CR>
-nnoremap <C-T>j <Cmd>lua require('self.tabpage').move('-')<CR>
-nnoremap <C-T>k <Cmd>lua require('self.tabpage').move('+')<CR>
-nnoremap <C-T>l <Cmd>tabnext<CR>
-nnoremap <C-T>1 <Cmd>tabnext 1<CR>
-nnoremap <C-T>2 <Cmd>tabnext 2<CR>
-nnoremap <C-T>3 <Cmd>tabnext 3<CR>
-nnoremap <C-T>4 <Cmd>tabnext 4<CR>
-nnoremap <C-T>5 <Cmd>tabnext 5<CR>
-nnoremap <C-T>6 <Cmd>tabnext 6<CR>
-nnoremap <C-T>7 <Cmd>tabnext 7<CR>
-nnoremap <C-T>8 <Cmd>tabnext 8<CR>
-nnoremap <C-T>9 <Cmd>tabnext 9<CR>
+nnoremap <Leader>tp <Cmd>tabnext #<CR>
+nnoremap <Leader>th <Cmd>tabprevious<CR>
+nnoremap <Leader>tj <Cmd>lua require('self.tabpage').move('-')<CR>
+nnoremap <Leader>tk <Cmd>lua require('self.tabpage').move('+')<CR>
+nnoremap <Leader>tl <Cmd>tabnext<CR>
+nnoremap <Leader>t1 <Cmd>tabnext 1<CR>
+nnoremap <Leader>t2 <Cmd>tabnext 2<CR>
+nnoremap <Leader>t3 <Cmd>tabnext 3<CR>
+nnoremap <Leader>t4 <Cmd>tabnext 4<CR>
+nnoremap <Leader>t5 <Cmd>tabnext 5<CR>
+nnoremap <Leader>t6 <Cmd>tabnext 6<CR>
+nnoremap <Leader>t7 <Cmd>tabnext 7<CR>
+nnoremap <Leader>t8 <Cmd>tabnext 8<CR>
+nnoremap <Leader>t9 <Cmd>tabnext 9<CR>
