@@ -1,5 +1,31 @@
 # CHANGE LOG
 
+## 2026.0
+
+_Support for LSP and treesitter in neovim, along with CLI tool launcher._
+
+### Added
+
+- **Neovim**
+  - LSP configuration for Rust (rust-analyzer) and C++ (clangd).
+  - Plugin management via `lazy.nvim`; integrated `blink.cmp` for auto-completion.
+  - Treesitter enabled for available filetypes, including folding support.
+  - Scratch file toggle with edge swapping and auto-write support.
+  - Tool launcher utility with last-used tool toggle and temporary tabline.
+  - Cursorline enabled only in focused window; additional convenience keymaps.
+- **AI**
+  - Aider and OpenCode installation logic with bash completion.
+  - OpenCode configuration with custom agents and keymaps.
+- **GDB**
+  - Configuration and watcher module.
+
+### Fixed
+
+- **Neovim**
+  - Prevented leakage of `g:TabpageNames` during session load.
+- **Setup**
+  - Fixed WezTerm bash completion generation bug.
+
 ## 2025.3.0
 
 _Improvements to setup logic, and include Neovim and Aider._

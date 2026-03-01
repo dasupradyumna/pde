@@ -38,7 +38,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 require('lazy').setup('pack', {
     defaults = { cond = not vim.g.user.neovim_git_mode },
-    lockfile = data_path .. '/lazy-lock.json',
     dev = { path = '~/neovim_plugins', patterns = { 'dasupradyumna' }, fallback = true },
     install = { colorscheme = { 'retrobox' } },
     ui = { size = { width = 0.999, height = 0.95 }, border = 'rounded' },
