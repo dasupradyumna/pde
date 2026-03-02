@@ -24,9 +24,10 @@ function! s:enable_treesitter(filetype)
 
     lua vim.treesitter.start()
     setlocal foldmethod=expr
+    setlocal indentexpr=v:lua.require('nvim-treesitter').indentexpr()
 endfunction
 
-augroup __user__
+augroup __self__general__
     autocmd!
 
     " Trim trailing whitespace just before saving

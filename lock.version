@@ -1,8 +1,9 @@
 ####################### LOCK VERSIONS ######################
 
-lazygit     0.54.2
-delta       0.18.2
-ripgrep     15.1.0
-neovim      0.11.5
-git-crypt   0.8.0
-clangd      21.1.8
+lazygit                 0.54.2
+delta                   0.18.2
+ripgrep                 15.1.0
+neovim                  0.11.5
+git-crypt               0.8.0
+clangd                  21.1.8
+tree-sitter             0.26.6

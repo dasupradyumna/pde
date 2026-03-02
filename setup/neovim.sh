@@ -4,7 +4,7 @@
 manage_neovim() {
     if $OPT__UNINSTALL; then
         cd "$LOCAL_DIR"
-        $SUDO rm -rf 'bin/ripgrep' 'bin/xclip'
+        $SUDO rm -rf 'bin/ripgrep' 'bin/xclip' 'bin/tree-sitter'
         echo && log -i 'Uninstalled RipGrep and XClip'
 
         $SUDO rm -rf 'bin/nvim' 'lib/nvim' 'share/nvim/runtime' 'share/man/man1/nvim.1'
@@ -13,6 +13,7 @@ manage_neovim() {
     else
         __install_ripgrep
         __install_xclip
+        __install_treesitter
         __install_neovim
     fi
 }
@@ -36,7 +37,7 @@ __install_ripgrep() {
     log -i "Downloaded v$ver TAR package"
 
     # Install RipGrep binary
-    tar xf pkg.tar.gz "$pkg/rg"
+    tar xf 'pkg.tar.gz' "$pkg/rg"
     $SUDO install "$pkg/rg" -D -t "$LOCAL_DIR/bin"
     cd ~-
     log -i "Installed RipGrep to $LOCAL_DIR/bin"
@@ -66,6 +67,31 @@ __install_xclip() {
         log -i "Installed XClip (APT-user)"
         cd ~-
     fi
+}
+
+# Install Treesitter of specified version
+__install_treesitter() {
+    echo && log -i 'Setting up Treesitter ...'
+    local -r ver="${LOCK_VERSIONS[tree-sitter]}"
+
+    # Check if Treesitter is already up-to-date
+    local curr_ver='(none)'
+    if has_cmd tree-sitter; then
+        curr_ver="$(tree-sitter --version | awk '{print $2}')"
+    fi
+    if is_latest_installed 'tree-sitter' "$curr_ver" "$ver"; then return; fi
+
+    # Download Treesitter GZip file
+    cd "$TEMP_DIR"
+    local -r pkg="tree-sitter-linux-x64"
+    curl_file_github 'tree-sitter/tree-sitter' "$ver" "$pkg.gz" 'pkg.gz'
+    log -i "Downloaded v$ver GZip package"
+
+    # Install Treesitter binary
+    gunzip -c "$pkg.gz" > 'tree-sitter'
+    $SUDO install 'tree-sitter' -D -t "$LOCAL_DIR/bin"
+    cd ~-
+    log -i "Installed Treesitter to $LOCAL_DIR/bin"
 }
 
 # Install Neovim of specified version
