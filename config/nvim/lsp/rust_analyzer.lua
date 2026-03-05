@@ -5,7 +5,7 @@ local function reload_workspace(bufnr)
     for _, client in ipairs(clients) do
         vim.notify 'Reloading Cargo Workspace'
         ---@diagnostic disable-next-line:param-type-mismatch
-        client:request('rust-analyzer/reloadWorkspace', nil, function(err)
+        client:request('rust-analyzer/reloadWorkspace', nil, function (err)
             if err then
                 error(tostring(err))
             end
@@ -36,7 +36,7 @@ return {
     cmd = { 'rust-analyzer' },
     filetypes = { 'rust' },
     -- NOTE: Ensures that any external file (library or toolchain) uses current project client
-    root_dir = function(bufnr, on_dir)
+    root_dir = function (bufnr, on_dir)
         local fname = vim.api.nvim_buf_get_name(bufnr)
         local reused_dir = is_library(fname)
         if reused_dir then
@@ -65,7 +65,7 @@ return {
             cargo_crate_dir .. '/Cargo.toml',
         }
 
-        vim.system(cmd, { text = true }, function(output)
+        vim.system(cmd, { text = true }, function (output)
             if output.code == 0 then
                 if output.stdout then
                     local result = vim.json.decode(output.stdout)
@@ -76,8 +76,9 @@ return {
 
                 on_dir(cargo_workspace_root or cargo_crate_dir)
             else
-                vim.schedule(function()
-                    vim.notify(('[rust_analyzer] cmd failed with code %d: %s\n%s'):format(output.code, cmd, output.stderr))
+                vim.schedule(function ()
+                    vim.notify(('[rust_analyzer] cmd failed with code %d: %s\n%s'):format(
+                        output.code, cmd, output.stderr))
                 end)
             end
         end)
@@ -114,12 +115,12 @@ return {
     },
     --- NOTE: do not set `init_options` for this LS config, it will be automatically populated by
     ---       the contents of settings["rust-analyzer"] per https://github.com/rust-lang/rust-analyzer/blob/eb5da56d839ae0a9e9f50774fa3eb78eb0964550/docs/dev/lsp-extensions.md?plain=1#L26.
-    before_init = function(init_params, config)
+    before_init = function (init_params, config)
         if config.settings and config.settings['rust-analyzer'] then
             init_params.initializationOptions = config.settings['rust-analyzer']
         end
         ---@param command table{ title: string, command: string, arguments: any[] }
-        vim.lsp.commands['rust-analyzer.runSingle'] = function(command)
+        vim.lsp.commands['rust-analyzer.runSingle'] = function (command)
             local r = command.arguments[1]
             local cmd = { 'cargo', unpack(r.args.cargoArgs) }
             if r.args.executableArgs and #r.args.executableArgs > 0 then
@@ -137,8 +138,8 @@ return {
             end
         end
     end,
-    on_attach = function(_, bufnr)
-        vim.api.nvim_buf_create_user_command(bufnr, 'LspCargoReload', function()
+    on_attach = function (_, bufnr)
+        vim.api.nvim_buf_create_user_command(bufnr, 'LspCargoReload', function ()
             reload_workspace(bufnr)
         end, { desc = 'Reload current cargo workspace' })
     end,

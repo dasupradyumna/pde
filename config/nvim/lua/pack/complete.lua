@@ -4,9 +4,10 @@
 --- @return boolean
 local function show_if_preceding_is_keyword(cmp)
     local col = vim.api.nvim_win_get_cursor(0)[2]
-    if not (col == 0 or vim.api.nvim_get_current_line():sub(col,col):match '%s') then
-        return cmp.show()
+    if (col == 0 or vim.api.nvim_get_current_line():sub(col, col):match '%s') then
+        return false
     end
+    return cmp.show()
 end
 
 local kind_map = {
@@ -55,8 +56,8 @@ return {
         completion = {
             trigger = {
                 show_on_backspace_in_keyword = true,
-                show_on_blocked_trigger_characters = function(ctx) return { ' ', '\n', '\t' } end,
-                show_on_x_blocked_trigger_characters = function(ctx) return { '"', "'", '(' } end,
+                show_on_blocked_trigger_characters = function () return { ' ', '\n', '\t' } end,
+                show_on_x_blocked_trigger_characters = function () return { '"', "'", '(' } end,
             },
             list = { max_items = 50, selection = { preselect = false } },
             menu = {
@@ -67,15 +68,15 @@ return {
                 draw = {
                     gap = 2,
                     snippet_indicator = '',
-                    treesitter = { 'lsp' }, -- TODO: check this after setting up treesitter
+                    treesitter = { 'lsp' },
                     columns = { { 'kind' }, { 'label' }, { 'label_description' } },
                     components = {
                         kind = {
                             width = { min = 3, max = 3 },
-                            text = function(ctx) return kind_map[ctx.kind] end,
+                            text = function (ctx) return kind_map[ctx.kind] end,
                         },
                         label = {
-                            text = function(ctx)
+                            text = function (ctx)
                                 if #ctx.label_detail > 0 then
                                     return ('%s (%s)'):format(ctx.label, ctx.label_detail)
                                 end
@@ -92,7 +93,7 @@ return {
                     min_width = 25,
                     border = 'rounded',
                     winblend = 20,
-                    winhighlight = 'Search:None'
+                    winhighlight = 'Search:None',
                 },
             },
         },
@@ -108,7 +109,7 @@ return {
                 scrollbar = true,
             },
         },
-        sources = { -- TODO: add community sources (after built-in is configured)
+        sources = {  -- TODO: add community sources (after built-in is configured)
             default = { 'lsp', 'path', 'snippets', 'buffer' },
             min_keyword_length = 2,
             providers = {

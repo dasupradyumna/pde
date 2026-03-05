@@ -49,6 +49,12 @@ return {
             nameStyle = {
                 -- Refer: https://github.com/CppCXY/EmmyLuaCodeStyle/blob/master/docs/name_style_EN.md
                 config = {
+                    local_name_style = { 'snake_case', 'upper_snake_case' },
+                    function_param_name_style = {
+                        'snake_case',
+                        { type = 'ignore', param = { '_' } },
+                    },
+                    table_field_name_style = { 'snake_case', 'camel_case', 'pascal_case' },
                     global_variable_name_style = { 'upper_snake_case' },
                     class_name_style = { 'pascal_case' },
                 },
