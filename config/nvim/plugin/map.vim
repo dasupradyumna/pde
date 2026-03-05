@@ -8,9 +8,13 @@ map <BS> <NOP>
 noremap ; :
 noremap : ;
 
-" Swap marks (line and character)
-noremap ' `
-noremap ` '
+" Swap marks (line and character) only in normal, visual, and operator modes
+nnoremap ' `
+nnoremap ` '
+xnoremap ' `
+xnoremap ` '
+onoremap ' `
+onoremap ` '
 
 " Replace <Esc> with <C-;> - more uniform across modes
 noremap <C-;> <Esc>
@@ -98,6 +102,7 @@ xnoremap <Leader>cP "+P
 "----------------------------------- TABPAGE ----------------------------------"
 
 nnoremap <Leader>tc <Cmd>lua require('self.tabpage').create()<CR>
+nnoremap <Leader>tC <C-W>T<Cmd>lua require('self.tabpage').rename()<CR>
 nnoremap <Leader>tr <Cmd>lua require('self.tabpage').rename()<CR>
 nnoremap <Leader>tq <Cmd>tabclose<CR>
 nnoremap <Leader>tQ <Cmd>windo bwipeout!<CR>
