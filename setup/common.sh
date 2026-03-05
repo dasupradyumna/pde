@@ -31,7 +31,8 @@ load_tool_versions() {
 ensure_system_deps() {
     if $OPT__UNINSTALL; then return; fi
 
-    local -a deps=('bash-completion' 'build-essential' 'cmake' 'curl' 'software-properties-common')
+    local -a deps=('bash-completion' 'build-essential' 'cmake' 'curl' '' \
+                        'software-properties-common')
     $OPT__HEADLESS || deps+=('python3-nautilus')
     echo && log -i 'Ensuring dependencies are installed ...'
 

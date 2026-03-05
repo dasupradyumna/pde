@@ -6,4 +6,7 @@ ripgrep                 15.1.0
 neovim                  0.11.5
 git-crypt               0.8.0
 clangd                  21.1.8
+lua-language-server     3.17.1
 tree-sitter             0.26.6
+codelldb                1.12.1
+debugpy                 1.8.20
