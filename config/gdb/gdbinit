@@ -8,6 +8,8 @@ add-auto-load-safe-path ~/projects
 
 # Disable confirmation prompts
 set confirm off
+# Set colorful bold prompt
+set prompt \n\n\001\033[1;31m\002GBD >> \001\033[0m\002
 # Enable debuginfo auto-download
 set debuginfod enabled on
 # Disable pagination prompts
@@ -21,21 +23,6 @@ set print pretty on
 # Display C++ static members
 set print static-members on
 
-# # TUI Settings
-# # Configure TUI appearance
-# set tui active-border-mode bold
-# set tui compact-source on
-# set debug tui off
-# # Enter side-by-side TUI layout
-# tui new-layout src-cmd-hor src 5 status 0 cmd 1
-# define ui
-#     layout src-cmd-hor
-#     set trace-commands on
-#     set logging redirect on
-#     set logging debugredirect on
-#     set logging enabled on
-# end
-
 # Delete breakpoint
 define bd
     delete breakpoints $arg0
@@ -46,8 +33,7 @@ define bls
     info breakpoints
 end
 
-# Display current function arguments and local scope variables
-# - Customized to dereference `this` argument (inside class methods)
+# Display current function arguments, local scope variables, and watcher expressions
 define state
     printf "\n-------------------- FUNCTION ARGUMENTS --------------------\n"
     info args
