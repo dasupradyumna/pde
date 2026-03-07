@@ -1,0 +1,6 @@
+[package]
+name = "pde-manager"
+edition = "2024"
+
+[dependencies]
+lexopt = "0.3"
