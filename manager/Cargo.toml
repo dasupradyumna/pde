@@ -3,4 +3,7 @@ name = "pde-manager"
 edition = "2024"
 
 [dependencies]
+home = "0.5"
 lexopt = "0.3"
+self-replace = "1.5"
+which = "8"
