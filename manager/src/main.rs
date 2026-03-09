@@ -1,6 +1,7 @@
 mod component;
 mod utils;
 
+use crate::component::Manifest;
 use std::fs;
 use std::path::PathBuf;
 use std::process::{self, Command};
@@ -81,6 +82,23 @@ fn manage_pde(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("PDE already exists at {:?}, skipping clone", pde_path);
     }
+
+    // Read install spec file (TOML) into vector of components
+    let toml_content = fs::read_to_string(pde_path.join("manifest.toml"))
+        .map_err(|e| format!("Failed to read manifest: {e}"))?;
+    let manifest: Manifest =
+        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse manifest: {e}"))?;
+    let components = manifest.component;
+    dbg!(&components);
+
+    // CLAUDE: IGNORE BELOW COMMENTS
+    // Iterate over vector of components
+    // - skip if component is disabled
+    // - install component binaries
+    //   - switch logic based on installation method
+    //   - extra commands
+    // - install config if enabled (mostly creating a symlink)
+    // Display total time taken by the script
 
     Ok(())
 }

@@ -1,0 +1,115 @@
+#################################### INSTALL SPECIFICATION LIST ####################################
+
+############################## AI COMPONENTS ##############################
+# TODO: implement this - aider, opencode
+
+############################## GIT COMPONENTS #############################
+
+[[component]]
+name = "lazygit"
+group = "git"
+version = "0.54.2"
+[component.installer]
+type = "release_asset"
+repo = "jesseduffield/lazygit"
+asset = "lazygit_{}_Linux_x86_64"
+asset_ext = "tar.gz"
+
+[[component]]
+name = "delta"
+group = "git"
+version = "0.18.2"
+[component.installer]
+type = "release_asset"
+repo = "dandavison/delta"
+asset = "delta-{}-x86_64-unknown-linux-gnu"
+asset_ext = "tar.gz"
+
+[[component]]
+name = "git-crypt"
+group = "git"
+version = "0.8.0"
+[component.installer]
+type = "release_asset"
+repo = "AGWA/git-crypt"
+asset = "git-crypt-{}-linux-x86_64"
+asset_ext = ""
+
+# TODO: add git-remote-gcrypt
+
+############################ NEOVIM COMPONENTS ############################
+
+[[component]]
+name = "neovim"
+group = "neovim"
+version = "0.11.5"
+[component.installer]
+type = "build_source"
+repo = "neovim/neovim"
+commands = ["make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=$LOCAL_DIR", "make install"]
+
+# TODO: add xclip
+
+[[component]]
+name = "ripgrep"
+group = "neovim"
+version = "15.1.0"
+[component.installer]
+type = "release_asset"
+repo = "BurntSushi/ripgrep"
+asset = "ripgrep-{}-x86_64-unknown-linux-musl"
+asset_ext = "tar.gz"
+
+[[component]]
+name = "tree-sitter"
+group = "neovim"
+version = "0.26.6"
+[component.installer]
+type = "release_asset"
+repo = "tree-sitter/tree-sitter"
+asset = "tree-sitter-linux-x64"
+asset_ext = "gz"
+
+[[component]]
+name = "clangd"
+group = "neovim"
+version = "21.1.8"
+[component.installer]
+type = "release_asset"
+repo = "clangd/clangd"
+asset = "clangd-linux-{}"
+asset_ext = "zip"
+
+[[component]]
+name = "lua-language-server"
+group = "neovim"
+version = "3.17.1"
+[component.installer]
+type = "release_asset"
+repo = "LuaLS/lua-language-server"
+asset = "lua-language-server-{}-linux-x64"
+asset_ext = "tar.gz"
+
+[[component]]
+name = "codelldb"
+group = "neovim"
+version = "1.12.1"
+[component.installer]
+type = "release_asset"
+repo = "vadimcn/codelldb"
+asset = "codelldb-linux-x64"
+asset_ext = "vsix"
+
+# TODO: add new installer type
+# [[component]]
+# name = "debugpy"
+# group = "neovim"
+# version = "1.8.20"
+# [component.installer]
+# type = "release_asset"
+# repo = "microsoft/debugpy"
+# asset = "debugpy-{}-py2.py3-none-any"
+# asset_ext = "whl"
+
+############################ WEZTERM COMPONENTS ###########################
+# TODO: implement this - wezterm
