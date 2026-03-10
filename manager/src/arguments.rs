@@ -1,0 +1,108 @@
+use crate::utils;
+use std::fs;
+use std::path::PathBuf;
+use std::process;
+
+#[derive(Debug)]
+pub enum Mode {
+    UpgradeSelf,
+    ManageTools(Context),
+}
+
+#[derive(Debug)]
+pub struct Context {
+    pub clone_dir: PathBuf,
+    pub temp_dir: PathBuf,
+    pub install_prefix: PathBuf,
+}
+
+pub fn help() {
+    println!("Usage: pde-manager [OPTIONS]\n");
+    println!("  -h          Show this help message and exit");
+    println!("  -c <PATH>   PDE clone directory (default: $HOME/projects)");
+    println!("  -i <PATH>   Prefix to installation paths\n");
+    println!("  --upgrade   Build and upgrade pde-manager");
+    println!("              (Assumes CWD is PDE root; fails otherwise)");
+}
+
+pub fn parse() -> Result<Mode, Box<dyn std::error::Error>> {
+    let mut arg_c = None;
+    let mut arg_i = None;
+
+    let mut parser = lexopt::Parser::from_env();
+    while let Some(arg) = parser.next()? {
+        match arg {
+            // Show help
+            lexopt::Arg::Short('h') => {
+                self::help();
+                process::exit(0);
+            }
+            // Clone directory path
+            lexopt::Arg::Short('c') => arg_c = Some(PathBuf::from(parser.value()?)),
+            // Installation prefix
+            lexopt::Arg::Short('i') => arg_i = Some(PathBuf::from(parser.value()?)),
+
+            // Upgrade PDE manager binary
+            lexopt::Arg::Long("upgrade") => {
+                return Ok(Mode::UpgradeSelf);
+            }
+
+            /////////////////// UNEXPECTED ARGUMENTS ///////////////////
+            lexopt::Arg::Short(c) => {
+                return Err(format!("Unexpected argument: -{c}").into());
+            }
+            lexopt::Arg::Long(l) => {
+                return Err(format!("Unexpected argument: --{l}").into());
+            }
+            lexopt::Arg::Value(v) => {
+                return Err(format!("Unexpected value: {}", v.to_string_lossy()).into());
+            }
+        }
+    }
+
+    // Check missing arguments and apply defaults or throw error
+    let arg_c = arg_c.unwrap_or_else(|| utils::home().join("projects"));
+    let arg_i = arg_i.ok_or_else(|| "Missing argument: -i (install prefix)")?;
+
+    let ctx = validate(arg_c, arg_i)?;
+    Ok(Mode::ManageTools(ctx))
+}
+
+fn validate(
+    mut clone_dir: PathBuf,
+    mut install_prefix: PathBuf,
+) -> Result<Context, Box<dyn std::error::Error>> {
+    let ensure_exists_and_writable = |dir: &PathBuf| -> Result<(), Box<dyn std::error::Error>> {
+        // Ensure directory exists
+        fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory {dir:?}: {e}"))?;
+
+        // Check if directory is writable
+        let test_file = dir.join(".pde-manager-write-test");
+        fs::File::create(&test_file).map_err(|e| {
+            format!(
+                "Directory {dir:?} is not writable: {e}\n\
+                Re-run with adequate write permissions and/or appropriate privileges"
+            )
+        })?;
+        fs::remove_file(&test_file)
+            .map_err(|e| format!("Failed to clean up test file in {dir:?}: {e}"))?;
+
+        Ok(())
+    };
+
+    // Validate and normalize path-based arguments
+    ensure_exists_and_writable(&clone_dir)?;
+    clone_dir = fs::canonicalize(clone_dir)?;
+    ensure_exists_and_writable(&install_prefix)?;
+    install_prefix = fs::canonicalize(install_prefix)?;
+
+    // Compute and validate temporary directory
+    let temp_dir = clone_dir.join("pde").join("temp");
+    ensure_exists_and_writable(&temp_dir)?;
+
+    Ok(Context {
+        clone_dir,
+        temp_dir,
+        install_prefix,
+    })
+}

@@ -1,8 +1,9 @@
+use crate::arguments::Context;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Manifest {
-    pub component: Vec<Component>,
+    pub list: Vec<Component>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -24,40 +25,33 @@ pub enum Group {
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum Installer {
-    BuildSource {
-        repo: String,
-        commands: Vec<String>,
-    },
-    ReleaseAsset {
-        repo: String,
-        asset: String,
-        asset_ext: String, // TODO: is this needed? depends on reqwest logic
-    },
+enum Installer {
+    BuildSource(BuildSpec),
+    ReleaseAsset(ReleaseSpec),
+}
+
+#[derive(Debug, Deserialize)]
+struct BuildSpec {
+    repo: String,
+    commands: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ReleaseSpec {
+    repo: String,
+    asset: String,
+    asset_ext: String, // TODO: is this needed? depends on reqwest logic
 }
 
 impl Component {
-    pub fn new(name: String, group: Group, version: String, installer: Installer) -> Self {
-        Component {
-            name,
-            group,
-            version,
-            installer,
-        }
-    }
-
-    pub fn install(&self) {
+    pub fn install(&self, ctx: &Context) {
         match &self.installer {
-            Installer::BuildSource { repo, commands } => build_from_source(),
-            Installer::ReleaseAsset {
-                repo,
-                asset,
-                asset_ext,
-            } => download_release_asset(),
+            Installer::BuildSource(spec) => build_from_source(ctx, spec),
+            Installer::ReleaseAsset(spec) => download_release_asset(ctx, spec),
         }
     }
 }
 
-fn build_from_source() {}
+fn build_from_source(ctx: &Context, spec: &BuildSpec) {}
 
-fn download_release_asset() {}
+fn download_release_asset(ctx: &Context, spec: &ReleaseSpec) {}

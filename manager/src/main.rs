@@ -1,24 +1,24 @@
+mod arguments;
 mod component;
 mod utils;
 
+use crate::arguments::{Context, Mode};
 use crate::component::Manifest;
 use std::fs;
-use std::path::PathBuf;
 use std::process::{self, Command};
 
 fn main() {
     // Parse command-line arguments
-    let args = parse_args().unwrap_or_else(|e| {
+    let args = arguments::parse().unwrap_or_else(|e| {
         utils::print_err(e);
-        show_help();
+        arguments::help();
         process::exit(1);
     });
     dbg!(&args);
 
-    let res = if args.upgrade_self {
-        upgrade_self()
-    } else {
-        manage_pde(args)
+    let res = match args {
+        Mode::UpgradeSelf => upgrade_self(),
+        Mode::ManageTools(ctx) => install_pde(ctx),
     };
     res.unwrap_or_else(|e| {
         utils::print_err(e);
@@ -47,14 +47,14 @@ fn upgrade_self() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn manage_pde(args: Args) -> Result<(), Box<dyn std::error::Error>> {
+fn install_pde(ctx: Context) -> Result<(), Box<dyn std::error::Error>> {
     // Check if git is installed and available
     if !utils::has_command("git") {
         return Err("'git' command not found!".into());
     }
 
     // Clone PDE (main) to target location, if it does not exist
-    let pde_path = args.clone_dir.join("pde");
+    let pde_path = ctx.clone_dir.join("pde");
     let cwd = std::env::current_dir()?;
     if utils::in_pde_root() && cwd != pde_path {
         return Err(format!(
@@ -65,6 +65,7 @@ fn manage_pde(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     } else if !utils::in_pde_root() && !pde_path.exists() {
         println!("Cloning PDE ...");
 
+        // TODO: move to SSH-based cloning, useful for dev work
         Command::new("git")
             .args(&[
                 "clone",
@@ -88,111 +89,15 @@ fn manage_pde(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Failed to read manifest: {e}"))?;
     let manifest: Manifest =
         toml::from_str(&toml_content).map_err(|e| format!("Failed to parse manifest: {e}"))?;
-    let components = manifest.component;
-    dbg!(&components);
+    dbg!(&manifest);
 
-    // CLAUDE: IGNORE BELOW COMMENTS
-    // Iterate over vector of components
-    // - skip if component is disabled
-    // - install component binaries
-    //   - switch logic based on installation method
-    //   - extra commands
-    // - install config if enabled (mostly creating a symlink)
-    // Display total time taken by the script
-
-    Ok(())
-}
-
-fn show_help() {
-    println!("Usage: pde-manager [OPTIONS]\n");
-    println!("  -h          Show this help message and exit");
-    println!("  -c <PATH>   PDE clone directory (default: $HOME/projects)");
-    println!("  -i <PATH>   Prefix to installation paths");
-    println!("  --upgrade   Build and upgrade pde-manager");
-    println!("              (Assumes CWD is PDE root; fails otherwise)");
-}
-
-#[derive(Debug)]
-struct Args {
-    clone_dir: PathBuf,
-    install_prefix: PathBuf,
-    upgrade_self: bool,
-}
-
-fn parse_args() -> Result<Args, Box<dyn std::error::Error>> {
-    let mut arg_c = None;
-    let mut arg_i = None;
-
-    let mut parser = lexopt::Parser::from_env();
-    while let Some(arg) = parser.next()? {
-        match arg {
-            // Show help
-            lexopt::Arg::Short('h') => {
-                show_help();
-                process::exit(0);
-            }
-            // Clone directory path
-            lexopt::Arg::Short('c') => arg_c = Some(PathBuf::from(parser.value()?)),
-            // Installation prefix
-            lexopt::Arg::Short('i') => arg_i = Some(PathBuf::from(parser.value()?)),
-
-            // Upgrade PDE manager binary
-            lexopt::Arg::Long("upgrade") => {
-                return Ok(Args {
-                    clone_dir: PathBuf::new(),
-                    install_prefix: PathBuf::new(),
-                    upgrade_self: true,
-                });
-            }
-
-            /////////////////// UNEXPECTED ARGUMENTS ///////////////////
-            lexopt::Arg::Short(c) => {
-                return Err(format!("Unexpected argument: -{c}").into());
-            }
-            lexopt::Arg::Long(l) => {
-                return Err(format!("Unexpected argument: --{l}").into());
-            }
-            lexopt::Arg::Value(v) => {
-                return Err(format!("Unexpected value: {}", v.to_string_lossy()).into());
-            }
-        }
+    for component in manifest.list {
+        // TODO: if component / group is disabled or already installed, then skip
+        component.install(&ctx);
+        // TODO: copy config - target dir??
     }
 
-    // Check missing arguments and apply defaults or throw error
-    let arg_c = arg_c.unwrap_or_else(|| utils::home().join("projects"));
-    let arg_i = arg_i.ok_or_else(|| "Missing argument: --install-prefix")?;
+    // TODO: Display total time taken by the script
 
-    return validate_args(Args {
-        clone_dir: arg_c,
-        install_prefix: arg_i,
-        upgrade_self: false,
-    });
-}
-
-fn validate_args(mut args: Args) -> Result<Args, Box<dyn std::error::Error>> {
-    let ensure_exists_and_writable = |dir: &PathBuf| -> Result<(), Box<dyn std::error::Error>> {
-        // Ensure directory exists
-        fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory {dir:?}: {e}"))?;
-
-        // Check if directory is writable
-        let test_file = dir.join(".pde-manager-write-test");
-        fs::File::create(&test_file).map_err(|e| {
-            format!(
-                "Directory {dir:?} is not writable: {e}\n\
-                Re-run with adequate write permissions and/or appropriate privileges"
-            )
-        })?;
-        fs::remove_file(&test_file)
-            .map_err(|e| format!("Failed to clean up test file in {dir:?}: {e}"))?;
-
-        Ok(())
-    };
-
-    // Validate and normalize both path-based arguments
-    ensure_exists_and_writable(&args.clone_dir)?;
-    args.clone_dir = fs::canonicalize(args.clone_dir)?;
-    ensure_exists_and_writable(&args.install_prefix)?;
-    args.install_prefix = fs::canonicalize(args.install_prefix)?;
-
-    Ok(args)
+    Ok(())
 }
