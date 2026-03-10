@@ -5,7 +5,7 @@ use std::process;
 
 #[derive(Debug)]
 pub enum Mode {
-    UpgradeSelf,
+    UpgradeSelf(bool),
     ManageTools(Context),
 }
 
@@ -18,14 +18,15 @@ pub struct Context {
 
 pub fn help() {
     println!("Usage: pde-manager [OPTIONS]\n");
-    println!("  -h          Show this help message and exit");
-    println!("  -c <PATH>   PDE clone directory (default: $HOME/projects)");
-    println!("  -i <PATH>   Prefix to installation paths\n");
-    println!("  --upgrade   Build and upgrade pde-manager");
-    println!("              (Assumes CWD is PDE root; fails otherwise)");
+    println!("  -h                  Show this help message and exit");
+    println!("  -c <PATH>           PDE clone directory (default: $HOME/projects)");
+    println!("  -i <PATH>           Prefix to installation paths\n");
+    println!("  --upgrade           Upgrade pde-manager (release build)");
+    println!("  --upgrade-debug     Upgrade pde-manager (debug build)");
+    println!("                      (Assumes CWD is PDE root; fails otherwise)");
 }
 
-pub fn parse() -> Result<Mode, Box<dyn std::error::Error>> {
+pub fn parse() -> utils::Result<Mode> {
     let mut arg_c = None;
     let mut arg_i = None;
 
@@ -43,9 +44,8 @@ pub fn parse() -> Result<Mode, Box<dyn std::error::Error>> {
             lexopt::Arg::Short('i') => arg_i = Some(PathBuf::from(parser.value()?)),
 
             // Upgrade PDE manager binary
-            lexopt::Arg::Long("upgrade") => {
-                return Ok(Mode::UpgradeSelf);
-            }
+            lexopt::Arg::Long("upgrade") => return Ok(Mode::UpgradeSelf(true)),
+            lexopt::Arg::Long("upgrade-debug") => return Ok(Mode::UpgradeSelf(false)),
 
             /////////////////// UNEXPECTED ARGUMENTS ///////////////////
             lexopt::Arg::Short(c) => {
@@ -68,11 +68,8 @@ pub fn parse() -> Result<Mode, Box<dyn std::error::Error>> {
     Ok(Mode::ManageTools(ctx))
 }
 
-fn validate(
-    mut clone_dir: PathBuf,
-    mut install_prefix: PathBuf,
-) -> Result<Context, Box<dyn std::error::Error>> {
-    let ensure_exists_and_writable = |dir: &PathBuf| -> Result<(), Box<dyn std::error::Error>> {
+fn validate(mut clone_dir: PathBuf, mut install_prefix: PathBuf) -> utils::Result<Context> {
+    let ensure_exists_and_writable = |dir: &PathBuf| -> utils::Result<()> {
         // Ensure directory exists
         fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory {dir:?}: {e}"))?;
 

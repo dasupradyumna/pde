@@ -17,37 +17,41 @@ fn main() {
     dbg!(&args);
 
     let res = match args {
-        Mode::UpgradeSelf => upgrade_self(),
+        Mode::UpgradeSelf(release) => upgrade_self(release),
         Mode::ManageTools(ctx) => install_pde(ctx),
     };
     res.unwrap_or_else(|e| {
         utils::print_err(e);
         process::exit(1);
     });
+
+    // TODO: handle cleanup during all kinds of exit
 }
 
-fn upgrade_self() -> Result<(), Box<dyn std::error::Error>> {
+fn upgrade_self(release: bool) -> utils::Result<()> {
     // Check if executed from current
     if !utils::in_pde_root() {
         return Err("Not executed from PDE root directory.".into());
     }
 
     // Build release binary
+    let profile = if release { "release" } else { "dev" };
     Command::new("cargo")
-        .args(&["build-manager"])
+        .args(&["build", "--profile", profile])
         .current_dir("manager")
         .status()
         .map_err(|e| format!("Build failed: {e}\nFix build errors and try again"))?;
 
     // Replace current executable with new binary
-    let new_binary = "manager/target/release/pde-manager";
+    let target_dir = if release { "release" } else { "debug" };
+    let new_binary = format!("manager/target/{target_dir}/pde-manager");
     self_replace::self_replace(&new_binary)?;
     fs::remove_file(&new_binary)?;
 
     Ok(())
 }
 
-fn install_pde(ctx: Context) -> Result<(), Box<dyn std::error::Error>> {
+fn install_pde(ctx: Context) -> utils::Result<()> {
     // Check if git is installed and available
     if !utils::has_command("git") {
         return Err("'git' command not found!".into());
@@ -93,7 +97,7 @@ fn install_pde(ctx: Context) -> Result<(), Box<dyn std::error::Error>> {
 
     for component in manifest.list {
         // TODO: if component / group is disabled or already installed, then skip
-        component.install(&ctx);
+        component.install(&ctx)?;
         // TODO: copy config - target dir??
     }
 

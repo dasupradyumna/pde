@@ -1,4 +1,5 @@
 use crate::arguments::Context;
+use crate::utils;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -40,18 +41,28 @@ struct BuildSpec {
 struct ReleaseSpec {
     repo: String,
     asset: String,
-    asset_ext: String, // TODO: is this needed? depends on reqwest logic
+    asset_ext: String,
+    bin_path: String,
 }
 
 impl Component {
-    pub fn install(&self, ctx: &Context) {
-        match &self.installer {
-            Installer::BuildSource(spec) => build_from_source(ctx, spec),
-            Installer::ReleaseAsset(spec) => download_release_asset(ctx, spec),
-        }
+    pub fn install(&self, ctx: &Context) -> utils::Result<()> {
+        let res = match &self.installer {
+            Installer::BuildSource(spec) => build_from_source(ctx, &self.version, spec),
+            Installer::ReleaseAsset(spec) => download_release_asset(ctx, &self.version, spec),
+        };
+        res.map_err(|e| format!("Installation failed: {}\n{e}", self.name).into())
     }
 }
 
-fn build_from_source(ctx: &Context, spec: &BuildSpec) {}
+fn build_from_source(_ctx: &Context, _version: &String, _spec: &BuildSpec) -> utils::Result<()> {
+    Ok(())
+}
 
-fn download_release_asset(ctx: &Context, spec: &ReleaseSpec) {}
+fn download_release_asset(
+    ctx: &Context,
+    version: &String,
+    spec: &ReleaseSpec,
+) -> utils::Result<()> {
+    Ok(())
+}

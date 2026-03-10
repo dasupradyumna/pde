@@ -3,6 +3,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 pub fn home() -> &'static PathBuf {
     static HOME: OnceLock<PathBuf> = OnceLock::new();
     HOME.get_or_init(|| home::home_dir().expect("$HOME environment variable not set"))

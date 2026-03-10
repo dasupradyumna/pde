@@ -1,2 +1,0 @@
-[alias]
-build-manager = "build --release"
