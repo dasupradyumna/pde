@@ -18,14 +18,20 @@ fn main() {
 
     let res = match args {
         Mode::UpgradeSelf(release) => upgrade_self(release),
-        Mode::ManageTools(ctx) => install_pde(ctx),
+        Mode::ManageTools(ctx) => {
+            let res = install_pde(&ctx);
+            // Clean up temp directory before exiting
+            // TODO: this does not happen on SIGINT
+            fs::remove_dir_all(&ctx.temp_dir).unwrap_or_else(|e| {
+                utils::print_err(format!("Clean-up failed for {:?}: {e}", ctx.temp_dir));
+            });
+            res
+        }
     };
     res.unwrap_or_else(|e| {
         utils::print_err(e);
         process::exit(1);
     });
-
-    // TODO: handle cleanup during all kinds of exit
 }
 
 fn upgrade_self(release: bool) -> utils::Result<()> {
@@ -51,7 +57,7 @@ fn upgrade_self(release: bool) -> utils::Result<()> {
     Ok(())
 }
 
-fn install_pde(ctx: Context) -> utils::Result<()> {
+fn install_pde(ctx: &Context) -> utils::Result<()> {
     // Check if git is installed and available
     if !utils::has_command("git") {
         return Err("'git' command not found!".into());
@@ -89,15 +95,16 @@ fn install_pde(ctx: Context) -> utils::Result<()> {
     }
 
     // Read install spec file (TOML) into vector of components
-    let toml_content = fs::read_to_string(pde_path.join("manifest.toml"))
-        .map_err(|e| format!("Failed to read manifest: {e}"))?;
-    let manifest: Manifest =
-        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse manifest: {e}"))?;
+    let manifest: Manifest = {
+        let toml_content = fs::read_to_string(pde_path.join("manifest.toml"))
+            .map_err(|e| format!("Failed to read manifest: {e}"))?;
+        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse manifest: {e}"))?
+    };
     dbg!(&manifest);
 
-    for component in manifest.list {
+    for mut component in manifest.list {
         // TODO: if component / group is disabled or already installed, then skip
-        component.install(&ctx)?;
+        component.resolve_placeholders().install(&ctx)?;
         // TODO: copy config - target dir??
     }
 

@@ -97,6 +97,11 @@ fn validate(mut clone_dir: PathBuf, mut install_prefix: PathBuf) -> utils::Resul
     let temp_dir = clone_dir.join("pde").join("temp");
     ensure_exists_and_writable(&temp_dir)?;
 
+    // Validate install prefix directories
+    for dir in ["bin", "lib", "share"] {
+        ensure_exists_and_writable(&install_prefix.join(dir))?;
+    }
+
     Ok(Context {
         clone_dir,
         temp_dir,

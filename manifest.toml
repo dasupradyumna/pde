@@ -6,110 +6,124 @@
 ############################## GIT COMPONENTS #############################
 
 [[list]]
-name = "lazygit"
 group = "git"
+[list.meta]
+name = "lazygit"
 version = "0.54.2"
 [list.installer]
 type = "release_asset"
 repo = "jesseduffield/lazygit"
-asset = "lazygit_{}_Linux_x86_64"
-asset_ext = "tar.gz"
+tag = "v{version}"
+asset = "lazygit_{version}_linux_x86_64"
+ext = ".tar.gz"
+bin = "lazygit"
 
 [[list]]
-name = "delta"
 group = "git"
+[list.meta]
+name = "delta"
 version = "0.18.2"
 [list.installer]
 type = "release_asset"
 repo = "dandavison/delta"
-asset = "delta-{}-x86_64-unknown-linux-gnu"
-asset_ext = "tar.gz"
+asset = "delta-{version}-x86_64-unknown-linux-gnu"
+ext = ".tar.gz"
+bin = "{asset}/delta"
 
-[[list]]
-name = "git-crypt"
-group = "git"
-version = "0.8.0"
-[list.installer]
-type = "release_asset"
-repo = "AGWA/git-crypt"
-asset = "git-crypt-{}-linux-x86_64"
-asset_ext = ""
+# TODO: maybe AptLocal
+# [[list]]
+# group = "git"
+# [list.meta]
+# name = "git-crypt"
+# version = "0.8.0"
+# [list.installer]
+# type = ""
+# repo = "AGWA/git-crypt"
+# asset = "git-crypt-{}-linux-x86_64"
+# ext = ""
 
 # TODO: add git-remote-gcrypt
 
 ############################ NEOVIM COMPONENTS ############################
 
-[[list]]
-name = "neovim"
-group = "neovim"
-version = "0.11.5"
-[list.installer]
-type = "build_source"
-repo = "neovim/neovim"
-commands = ["make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=$LOCAL_DIR", "make install"]
+# [[list]]
+# group = "neovim"
+# [list.meta]
+# name = "neovim"
+# version = "0.11.5"
+# [list.installer]
+# type = "build_source"
+# repo = "neovim/neovim"
+# commands = ["make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=$LOCAL_DIR", "make install"]
 
 # TODO: add xclip
 
 [[list]]
-name = "ripgrep"
 group = "neovim"
+[list.meta]
+name = "ripgrep"
 version = "15.1.0"
 [list.installer]
 type = "release_asset"
 repo = "BurntSushi/ripgrep"
-asset = "ripgrep-{}-x86_64-unknown-linux-musl"
-asset_ext = "tar.gz"
+asset = "ripgrep-{version}-x86_64-unknown-linux-musl"
+ext = ".tar.gz"
+bin = "{asset}/rg"
 
 [[list]]
-name = "tree-sitter"
 group = "neovim"
+[list.meta]
+name = "tree-sitter"
 version = "0.26.6"
 [list.installer]
 type = "release_asset"
 repo = "tree-sitter/tree-sitter"
+tag = "v{version}"
 asset = "tree-sitter-linux-x64"
-asset_ext = "gz"
+ext = ".gz"
+bin = "tree-sitter"
 
 [[list]]
-name = "clangd"
 group = "neovim"
+[list.meta]
+name = "clangd"
 version = "21.1.8"
 [list.installer]
 type = "release_asset"
 repo = "clangd/clangd"
-asset = "clangd-linux-{}"
-asset_ext = "zip"
+asset = "clangd-linux-{version}"
+ext = ".zip"
+pkg = true
+bin = "clangd_{version}/bin/clangd"
 
 [[list]]
-name = "lua-language-server"
 group = "neovim"
+[list.meta]
+name = "lua-language-server"
 version = "3.17.1"
 [list.installer]
 type = "release_asset"
 repo = "LuaLS/lua-language-server"
-asset = "lua-language-server-{}-linux-x64"
-asset_ext = "tar.gz"
+asset = "lua-language-server-{version}-linux-x64"
+ext = ".tar.gz"
+pkg = true
+bin = "bin/lua-language-server"
 
 [[list]]
-name = "codelldb"
 group = "neovim"
+[list.meta]
+name = "codelldb"
 version = "1.12.1"
 [list.installer]
 type = "release_asset"
 repo = "vadimcn/codelldb"
+tag = "v{version}"
 asset = "codelldb-linux-x64"
-asset_ext = "vsix"
+ext = ".vsix"
+pkg = true
+bin = "extension/adapter/codelldb"
 
-# TODO: add new installer type
-# [[list]]
-# name = "debugpy"
-# group = "neovim"
-# version = "1.8.20"
-# [list.installer]
-# type = "release_asset"
-# repo = "microsoft/debugpy"
-# asset = "debugpy-{}-py2.py3-none-any"
-# asset_ext = "whl"
+# TODO: pip install for debugpy
 
 ############################ WEZTERM COMPONENTS ###########################
 # TODO: implement this - wezterm

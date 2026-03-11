@@ -3,9 +3,13 @@ name = "pde-manager"
 edition = "2024"
 
 [dependencies]
+flate2 = "1.0"
 home = "0.5"
 lexopt = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
 self-replace = "1.5"
 serde = { version = "1.0", features = ["derive"] }
+tar = "0.4"
 toml = { version = "0.8", features = ["preserve_order"] }
 which = "8"
+zip = "0.6"
