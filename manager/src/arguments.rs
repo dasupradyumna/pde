@@ -11,7 +11,7 @@ pub enum Mode {
 
 #[derive(Debug)]
 pub struct Context {
-    pub clone_dir: PathBuf,
+    pub pde_dir: PathBuf,
     pub temp_dir: PathBuf,
     pub install_prefix: PathBuf,
 }
@@ -19,7 +19,7 @@ pub struct Context {
 pub fn help() {
     println!("Usage: pde-manager [OPTIONS]\n");
     println!("  -h                  Show this help message and exit");
-    println!("  -c <PATH>           PDE clone directory (default: $HOME/projects)");
+    println!("  -c <PATH>           PDE parent directory (default: $HOME/projects)");
     println!("  -i <PATH>           Prefix to installation paths\n");
     println!("  --upgrade           Upgrade pde-manager (release build)");
     println!("  --upgrade-debug     Upgrade pde-manager (debug build)");
@@ -93,17 +93,17 @@ fn validate(mut clone_dir: PathBuf, mut install_prefix: PathBuf) -> utils::Resul
     ensure_exists_and_writable(&install_prefix)?;
     install_prefix = fs::canonicalize(install_prefix)?;
 
-    // Compute and validate temporary directory
-    let temp_dir = clone_dir.join("pde").join("temp");
-    ensure_exists_and_writable(&temp_dir)?;
-
     // Validate install prefix directories
     for dir in ["bin", "lib", "share"] {
         ensure_exists_and_writable(&install_prefix.join(dir))?;
     }
 
+    // Compute temporary directory
+    let pde_dir = clone_dir.join("pde");
+    let temp_dir = pde_dir.join("temp");
+
     Ok(Context {
-        clone_dir,
+        pde_dir,
         temp_dir,
         install_prefix,
     })

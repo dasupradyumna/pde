@@ -4,7 +4,7 @@ use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 #[derive(Debug, Deserialize)]
@@ -20,7 +20,7 @@ pub struct Component {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 enum Group {
     AI,
     Git,
@@ -31,6 +31,7 @@ enum Group {
 #[derive(Debug, Deserialize)]
 pub struct Metadata {
     pub name: String,
+    #[serde(default)]
     version: String,
 }
 
@@ -39,6 +40,7 @@ pub struct Metadata {
 enum Installer {
     BuildSource(BuildSpec),
     ReleaseAsset(ReleaseSpec),
+    RunScript(ScriptSpec),
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,8 +61,20 @@ struct ReleaseSpec {
     bin: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct ScriptSpec {
+    url: String,
+    cmd: String,
+    #[serde(default)]
+    args: String,
+    #[serde(default)]
+    bin: String,
+    #[serde(default)]
+    env: Vec<(String, String)>,
+}
+
 impl Component {
-    pub fn resolve_placeholders(&mut self) -> &mut Self {
+    pub fn resolve_placeholders(&mut self, ctx: &Context) -> &mut Self {
         match &mut self.installer {
             Installer::BuildSource(_spec) => {}
             Installer::ReleaseAsset(spec) => {
@@ -73,6 +87,15 @@ impl Component {
                 spec.bin = spec.bin.replace("{version}", &self.meta.version);
                 spec.bin = spec.bin.replace("{asset}", &spec.asset);
             }
+            Installer::RunScript(spec) => {
+                // XXX: Required for opencode, remove if that is confirmed to use ReleaseAsset
+                let install_prefix = ctx.install_prefix.to_string_lossy();
+                spec.args = spec.args.replace("{version}", &self.meta.version);
+                spec.bin = spec.bin.replace("{install_prefix}", &install_prefix);
+                spec.env.iter_mut().for_each(|(_, v)| {
+                    *v = v.replace("{install_prefix}", &install_prefix);
+                });
+            }
         }
         self
     }
@@ -80,7 +103,8 @@ impl Component {
     pub fn install(&self, ctx: &Context) -> utils::Result<()> {
         let res = match &self.installer {
             Installer::BuildSource(spec) => build_from_source(ctx, &self.meta, spec),
-            Installer::ReleaseAsset(spec) => fetch_release_asset(ctx, &self.meta, spec),
+            Installer::ReleaseAsset(spec) => fetch_and_install_asset(ctx, &self.meta, spec),
+            Installer::RunScript(spec) => fetch_and_run_script(ctx, &self.meta, spec),
         };
         res.map_err(|e| format!("Component installation failed: {}\n{e}", self.meta.name).into())
     }
@@ -90,14 +114,18 @@ fn build_from_source(_ctx: &Context, _meta: &Metadata, _spec: &BuildSpec) -> uti
     Ok(())
 }
 
-fn fetch_release_asset(ctx: &Context, meta: &Metadata, spec: &ReleaseSpec) -> utils::Result<()> {
+fn fetch_and_install_asset(
+    ctx: &Context,
+    meta: &Metadata,
+    spec: &ReleaseSpec,
+) -> utils::Result<()> {
     // Ensure working directory for current component exists
     let work_dir = ctx.temp_dir.join(&meta.name);
     fs::create_dir_all(&work_dir)
         .map_err(|e| format!("Failed to create working directory: {e}"))?;
 
     // Download the asset and get its filename
-    let (asset, asset_path) = {
+    let asset_path = {
         // Construct the URL to download the asset
         let url = format!(
             "https://github.com/{}/releases/download/{}/{}{}",
@@ -105,23 +133,19 @@ fn fetch_release_asset(ctx: &Context, meta: &Metadata, spec: &ReleaseSpec) -> ut
         );
         dbg!(&url);
 
-        // Fetch the asset data via a blocking GET
-        let response = reqwest::blocking::get(url)?;
-        if !response.status().is_success() {
-            return Err(format!("HTTP error: {}", response.status()).into());
-        }
+        // Construct the asset file path
+        let asset_path = ctx
+            .temp_dir
+            .join(format!("{}-{}{}", meta.name, meta.version, spec.ext));
 
         // Get total size and stream the download with progress
-        let asset_name = format!("{}-{}{}", meta.name, meta.version, spec.ext);
-        let asset_path = ctx.temp_dir.join(&asset_name);
-        let mut asset = File::create(&asset_path)?;
-        self::write_asset_with_progress(response, &mut asset)?;
+        self::fetch_asset_with_progress(&url, &asset_path)?;
 
-        asset = File::open(&asset_path)?; // Re-open file for reading
-        (asset, asset_path)
+        asset_path
     };
 
     // Extract asset into the working directory based on its extension
+    let asset = File::open(&asset_path)?; // Re-open file for reading
     match spec.ext.as_str() {
         ".tar.gz" => {
             let gz = GzDecoder::new(&asset);
@@ -177,14 +201,8 @@ fn fetch_release_asset(ctx: &Context, meta: &Metadata, spec: &ReleaseSpec) -> ut
         }
         fs::rename(&work_dir, &pkg_dst)?;
 
-        // Handle OS-specific symlink creation
-        #[cfg(unix)]
-        let create_symlink = std::os::unix::fs::symlink::<PathBuf, &PathBuf>;
-        #[cfg(windows)]
-        let create_symlink = std::os::windows::fs::symlink_file::<PathBuf, PathBuf>;
-
         // Create symlink to binary inside package
-        create_symlink(pkg_dst.join(&spec.bin), &bin_dst)?;
+        self::create_symlink(pkg_dst.join(&spec.bin), bin_dst)?;
     } else {
         // Install binary
         fs::rename(work_dir.join(&spec.bin), &bin_dst)?;
@@ -193,18 +211,75 @@ fn fetch_release_asset(ctx: &Context, meta: &Metadata, spec: &ReleaseSpec) -> ut
     Ok(())
 }
 
-fn write_asset_with_progress(
-    mut response: reqwest::blocking::Response,
-    asset: &mut File,
+fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> utils::Result<()> {
+    // Determine script file extension from cmd
+    let script_path = ctx.temp_dir.join(format!("{}.{}", meta.name, spec.cmd));
+
+    // Fetch the script with progress
+    self::fetch_asset_with_progress(&spec.url, &script_path)?;
+
+    // Execute the script
+    let mut command = std::process::Command::new(&spec.cmd);
+    command
+        .arg(&script_path)
+        .args(spec.args.split_ascii_whitespace())
+        .envs(spec.env.clone());
+    dbg!(&command);
+    let status = command.status()?;
+    if !status.success() {
+        return Err(format!("Script execution failed: {}", status).into());
+    }
+
+    // Create symlink to install location, ONLY if specified
+    if !spec.bin.is_empty() {
+        // Get binary installation directory and destination file path
+        let bin_dir = ctx.install_prefix.join("bin");
+        let bin_dst = bin_dir.join(match spec.bin.rsplit_once('/') {
+            None => spec.bin.as_str(),
+            Some((_, basename)) => basename,
+        });
+
+        // Handle final binary installation
+        if bin_dst.exists() {
+            fs::remove_file(&bin_dst)?;
+        }
+        self::create_symlink(&spec.bin, bin_dst)?;
+    }
+
+    Ok(())
+}
+
+fn create_symlink<From, To>(from: From, to: To) -> utils::Result<()>
+where
+    From: AsRef<Path>,
+    To: AsRef<Path>,
+{
+    #[cfg(unix)]
+    return Ok(std::os::unix::fs::symlink(from, to)?);
+
+    #[cfg(windows)]
+    return Ok(std::os::windows::fs::symlink_file(from, to)?);
+}
+
+fn fetch_asset_with_progress(
+    url: &String,
+    asset_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    const BAR_WIDTH: usize = 50;
-    let mut downloaded = 0usize;
+    use std::io::Read; // To read the response
+
+    // Fetch the asset data via a blocking GET
+    let mut response = reqwest::blocking::get(url)?;
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()).into());
+    }
     let total_size = response.content_length().unwrap_or(0) as usize;
 
     // Stream the response body with progress tracking
-    use std::io::Read;
+    const BAR_WIDTH: usize = 50;
+    let mut asset = File::create(&asset_path)?;
     let mut buffer = [0u8; 8192];
     let start_time = Instant::now();
+    let mut downloaded = 0usize;
     loop {
         // Fetch the next chunk
         let n = response.read(&mut buffer)?;
@@ -216,7 +291,7 @@ fn write_asset_with_progress(
         }
         let elapsed = start_time.elapsed().as_secs_f64();
 
-        // Write fetched chunk to asset
+        // Write fetched chunk to asset file
         asset.write_all(&buffer[..n])?;
         downloaded += n;
 

@@ -64,15 +64,14 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     }
 
     // Clone PDE (main) to target location, if it does not exist
-    let pde_path = ctx.clone_dir.join("pde");
     let cwd = std::env::current_dir()?;
-    if utils::in_pde_root() && cwd != pde_path {
+    if utils::in_pde_root() && cwd != ctx.pde_dir {
         return Err(format!(
             "PDE already exists! Trying to clone PDE at 2 locations.\nExisting: {:?} Target: {:?}",
-            cwd, pde_path
+            cwd, ctx.pde_dir
         )
         .into());
-    } else if !utils::in_pde_root() && !pde_path.exists() {
+    } else if !utils::in_pde_root() && !ctx.pde_dir.exists() {
         println!("Cloning PDE ...");
 
         // TODO: move to SSH-based cloning, useful for dev work
@@ -80,23 +79,25 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
             .args(&[
                 "clone",
                 "https://github.com/dasupradyumna/pde",
-                &pde_path.to_string_lossy(),
+                &ctx.pde_dir.to_string_lossy(),
             ])
             .status()
             .map_err(|e| format!("Failed to clone PDE: {e}"))?;
 
         // Move pde-manager binary to the newly cloned PDE directory
-        fs::copy(std::env::current_exe()?, pde_path.join("pde-manager"))?;
+        fs::copy(std::env::current_exe()?, ctx.pde_dir.join("pde-manager"))?;
         self_replace::self_delete()?;
 
         println!("Clone complete!");
     } else {
-        println!("PDE already exists at {:?}, skipping clone", pde_path);
+        println!("PDE already exists at {:?}, skipping clone", ctx.pde_dir);
     }
+    // Ensure temp directory exists
+    fs::create_dir_all(&ctx.temp_dir)?;
 
     // Read install spec file (TOML) into vector of components
     let manifest: Manifest = {
-        let toml_content = fs::read_to_string(pde_path.join("manifest.toml"))
+        let toml_content = fs::read_to_string(ctx.pde_dir.join("manifest.toml"))
             .map_err(|e| format!("Failed to read manifest: {e}"))?;
         toml::from_str(&toml_content).map_err(|e| format!("Failed to parse manifest: {e}"))?
     };
@@ -104,7 +105,7 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
 
     for mut component in manifest.list {
         // TODO: if component / group is disabled or already installed, then skip
-        component.resolve_placeholders().install(&ctx)?;
+        component.resolve_placeholders(&ctx).install(&ctx)?;
         // TODO: copy config - target dir??
     }
 

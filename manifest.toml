@@ -1,7 +1,36 @@
 #################################### INSTALL SPECIFICATION LIST ####################################
 
 ############################## AI COMPONENTS ##############################
-# TODO: implement this - aider, opencode
+
+# TODO: Currently unused. Test in docker sandbox before using.
+# [[list]]
+# group = "ai"
+# [list.meta]
+# name = "aider"
+# [list.installer]
+# type = "run_script"
+# url = "https://aider.chat/install.sh"
+# cmd = "sh"
+
+[[list]]
+group = "ai"
+[list.meta]
+name = "opencode"
+version = "1.2.20"
+[list.installer]
+type = "release_asset"
+repo = "anomalyco/opencode"
+tag = "v{version}"
+asset = "opencode-linux-x64"
+ext = ".tar.gz"
+bin = "opencode"
+# XXX: remove if above method works fine
+# type = "run_script"
+# url = "https://opencode.ai/install"
+# cmd = "bash"
+# args = "--no-modify-path --version {version}"
+# bin = "{install_prefix}/bin/.opencode/bin/opencode"
+# env = [["INSTALL_DIR", "{install_prefix}/bin"]]
 
 ############################## GIT COMPONENTS #############################
 
