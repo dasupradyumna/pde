@@ -11,6 +11,7 @@ pub enum Mode {
 
 #[derive(Debug)]
 pub struct Context {
+    pub pde_branch: String,
     pub pde_dir: PathBuf,
     pub temp_dir: PathBuf,
     pub install_prefix: PathBuf,
@@ -19,6 +20,7 @@ pub struct Context {
 pub fn help() {
     println!("Usage: pde-manager [OPTIONS]\n");
     println!("  -h                  Show this help message and exit");
+    println!("  -b <BRANCH>         PDE target branch (default: main)");
     println!("  -c <PATH>           PDE parent directory (default: $HOME/projects)");
     println!("  -i <PATH>           Prefix to installation paths\n");
     println!("  --upgrade           Upgrade pde-manager (release build)");
@@ -27,6 +29,7 @@ pub fn help() {
 }
 
 pub fn parse() -> utils::Result<Mode> {
+    let mut arg_b = None;
     let mut arg_c = None;
     let mut arg_i = None;
 
@@ -38,6 +41,8 @@ pub fn parse() -> utils::Result<Mode> {
                 self::help();
                 process::exit(0);
             }
+            // Clone target branch
+            lexopt::Arg::Short('b') => arg_b = Some(parser.value()?.to_string_lossy().to_string()),
             // Clone directory path
             lexopt::Arg::Short('c') => arg_c = Some(PathBuf::from(parser.value()?)),
             // Installation prefix
@@ -61,14 +66,19 @@ pub fn parse() -> utils::Result<Mode> {
     }
 
     // Check missing arguments and apply defaults or throw error
+    let arg_b = arg_b.unwrap_or_else(|| "main".to_string());
     let arg_c = arg_c.unwrap_or_else(|| utils::home().join("projects"));
     let arg_i = arg_i.ok_or_else(|| "Missing argument: -i (install prefix)")?;
 
-    let ctx = validate(arg_c, arg_i)?;
+    let ctx = validate(arg_b, arg_c, arg_i)?;
     Ok(Mode::ManageTools(ctx))
 }
 
-fn validate(mut clone_dir: PathBuf, mut install_prefix: PathBuf) -> utils::Result<Context> {
+fn validate(
+    pde_branch: String,
+    mut clone_dir: PathBuf,
+    mut install_prefix: PathBuf,
+) -> utils::Result<Context> {
     let ensure_exists_and_writable = |dir: &PathBuf| -> utils::Result<()> {
         // Ensure directory exists
         fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory {dir:?}: {e}"))?;
@@ -103,6 +113,7 @@ fn validate(mut clone_dir: PathBuf, mut install_prefix: PathBuf) -> utils::Resul
     let temp_dir = pde_dir.join("temp");
 
     Ok(Context {
+        pde_branch,
         pde_dir,
         temp_dir,
         install_prefix,
