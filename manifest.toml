@@ -158,7 +158,6 @@ version = "1.8.20"
 [list.installer]
 type = "python_venv"
 pkg = "{name}"
-bin = "bin/{name}"
 
 ############################ WEZTERM COMPONENTS ###########################
 # TODO: implement this - wezterm

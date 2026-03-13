@@ -53,8 +53,8 @@ struct BuildSpec {
 
 #[derive(Debug, Deserialize)]
 struct VenvSpec {
-    #[serde(default)]
     pkg: String,
+    #[serde(default)]
     bin: String,
 }
 
@@ -88,7 +88,9 @@ impl Component {
             Installer::BuildSource(_spec) => {}
             Installer::PythonVenv(spec) => {
                 spec.pkg = spec.pkg.replace("{name}", &self.meta.name);
-                spec.bin = spec.bin.replace("{name}", &self.meta.name);
+                if spec.bin.is_empty() {
+                    spec.bin = spec.pkg.clone();
+                }
             }
             Installer::ReleaseAsset(spec) => {
                 // Tag
@@ -163,14 +165,11 @@ fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> ut
     }
 
     // Create symlink to install location, ONLY if specified
-    let bin_dst = bin_dir.join(match spec.bin.rsplit_once('/') {
-        None => spec.bin.as_str(),
-        Some((_, basename)) => basename,
-    });
+    let bin_dst = bin_dir.join(&spec.bin);
     if bin_dst.exists() {
         fs::remove_file(&bin_dst)?;
     }
-    self::create_symlink(venv_dir.join(&spec.bin), bin_dst)?;
+    self::create_symlink(venv_dir.join("bin").join(&spec.bin), bin_dst)?;
 
     Ok(())
 }
