@@ -21,9 +21,9 @@ version = "1.2.20"
 type = "release_asset"
 repo = "anomalyco/opencode"
 tag = "v{version}"
-asset = "opencode-linux-x64"
+asset = "{name}-linux-x64"
 ext = ".tar.gz"
-bin = "opencode"
+bin = "{name}"
 # XXX: remove if above method works fine
 # type = "run_script"
 # url = "https://opencode.ai/install"
@@ -43,9 +43,9 @@ version = "0.54.2"
 type = "release_asset"
 repo = "jesseduffield/lazygit"
 tag = "v{version}"
-asset = "lazygit_{version}_linux_x86_64"
+asset = "{name}_{version}_linux_x86_64"
 ext = ".tar.gz"
-bin = "lazygit"
+bin = "{name}"
 
 [[list]]
 group = "git"
@@ -55,9 +55,9 @@ version = "0.18.2"
 [list.installer]
 type = "release_asset"
 repo = "dandavison/delta"
-asset = "delta-{version}-x86_64-unknown-linux-gnu"
+asset = "{name}-{version}-x86_64-unknown-linux-gnu"
 ext = ".tar.gz"
-bin = "{asset}/delta"
+bin = "{asset}/{name}"
 
 # TODO: maybe AptLocal
 # [[list]]
@@ -85,8 +85,6 @@ bin = "{asset}/delta"
 # repo = "neovim/neovim"
 # commands = ["make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=$LOCAL_DIR", "make install"]
 
-# TODO: add xclip
-
 [[list]]
 group = "neovim"
 [list.meta]
@@ -95,7 +93,7 @@ version = "15.1.0"
 [list.installer]
 type = "release_asset"
 repo = "BurntSushi/ripgrep"
-asset = "ripgrep-{version}-x86_64-unknown-linux-musl"
+asset = "{name}-{version}-x86_64-unknown-linux-musl"
 ext = ".tar.gz"
 bin = "{asset}/rg"
 
@@ -108,9 +106,9 @@ version = "0.26.6"
 type = "release_asset"
 repo = "tree-sitter/tree-sitter"
 tag = "v{version}"
-asset = "tree-sitter-linux-x64"
+asset = "{name}-linux-x64"
 ext = ".gz"
-bin = "tree-sitter"
+bin = "{name}"
 
 [[list]]
 group = "neovim"
@@ -120,10 +118,10 @@ version = "21.1.8"
 [list.installer]
 type = "release_asset"
 repo = "clangd/clangd"
-asset = "clangd-linux-{version}"
+asset = "{name}-linux-{version}"
 ext = ".zip"
 pkg = true
-bin = "clangd_{version}/bin/clangd"
+bin = "{name}_{version}/bin/{name}"
 
 [[list]]
 group = "neovim"
@@ -133,10 +131,10 @@ version = "3.17.1"
 [list.installer]
 type = "release_asset"
 repo = "LuaLS/lua-language-server"
-asset = "lua-language-server-{version}-linux-x64"
+asset = "{name}-{version}-linux-x64"
 ext = ".tar.gz"
 pkg = true
-bin = "bin/lua-language-server"
+bin = "bin/{name}"
 
 [[list]]
 group = "neovim"
@@ -147,12 +145,20 @@ version = "1.12.1"
 type = "release_asset"
 repo = "vadimcn/codelldb"
 tag = "v{version}"
-asset = "codelldb-linux-x64"
+asset = "{name}-linux-x64"
 ext = ".vsix"
 pkg = true
-bin = "extension/adapter/codelldb"
+bin = "extension/adapter/{name}"
 
-# TODO: pip install for debugpy
+[[list]]
+group = "neovim"
+[list.meta]
+name = "debugpy"
+version = "1.8.20"
+[list.installer]
+type = "python_venv"
+pkg = "{name}"
+bin = "bin/{name}"
 
 ############################ WEZTERM COMPONENTS ###########################
 # TODO: implement this - wezterm

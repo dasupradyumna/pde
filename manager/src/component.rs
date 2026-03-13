@@ -5,6 +5,7 @@ use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::time::Instant;
 
 #[derive(Debug, Deserialize)]
@@ -39,6 +40,7 @@ pub struct Metadata {
 #[serde(tag = "type", rename_all = "snake_case")]
 enum Installer {
     BuildSource(BuildSpec),
+    PythonVenv(VenvSpec),
     ReleaseAsset(ReleaseSpec),
     RunScript(ScriptSpec),
 }
@@ -47,6 +49,13 @@ enum Installer {
 struct BuildSpec {
     _repo: String,
     _commands: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct VenvSpec {
+    #[serde(default)]
+    pkg: String,
+    bin: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,15 +86,28 @@ impl Component {
     pub fn resolve_placeholders(&mut self, ctx: &Context) -> &mut Self {
         match &mut self.installer {
             Installer::BuildSource(_spec) => {}
+            Installer::PythonVenv(spec) => {
+                spec.pkg = spec.pkg.replace("{name}", &self.meta.name);
+                spec.bin = spec.bin.replace("{name}", &self.meta.name);
+            }
             Installer::ReleaseAsset(spec) => {
+                // Tag
                 spec.tag = if spec.tag.is_empty() {
                     self.meta.version.clone()
                 } else {
                     spec.tag.replace("{version}", &self.meta.version)
                 };
-                spec.asset = spec.asset.replace("{version}", &self.meta.version);
-                spec.bin = spec.bin.replace("{version}", &self.meta.version);
-                spec.bin = spec.bin.replace("{asset}", &spec.asset);
+                // Asset
+                spec.asset = spec
+                    .asset
+                    .replace("{name}", &self.meta.name)
+                    .replace("{version}", &self.meta.version);
+                // Binary
+                spec.bin = spec
+                    .bin
+                    .replace("{asset}", &spec.asset)
+                    .replace("{name}", &self.meta.name)
+                    .replace("{version}", &self.meta.version);
             }
             Installer::RunScript(spec) => {
                 // XXX: Required for opencode, remove if that is confirmed to use ReleaseAsset
@@ -103,6 +125,7 @@ impl Component {
     pub fn install(&self, ctx: &Context) -> utils::Result<()> {
         let res = match &self.installer {
             Installer::BuildSource(spec) => build_from_source(ctx, &self.meta, spec),
+            Installer::PythonVenv(spec) => install_to_python_venv(ctx, &self.meta, spec),
             Installer::ReleaseAsset(spec) => fetch_and_install_asset(ctx, &self.meta, spec),
             Installer::RunScript(spec) => fetch_and_run_script(ctx, &self.meta, spec),
         };
@@ -111,6 +134,44 @@ impl Component {
 }
 
 fn build_from_source(_ctx: &Context, _meta: &Metadata, _spec: &BuildSpec) -> utils::Result<()> {
+    Ok(())
+}
+
+fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> utils::Result<()> {
+    let venv_name = format!(".{}", meta.name);
+    let bin_dir = ctx.install_prefix.join("bin");
+    let venv_dir = bin_dir.join(&venv_name);
+
+    // Delete existing virtual environment, if any
+    if venv_dir.exists() {
+        fs::remove_dir_all(&venv_dir)?;
+    }
+
+    // Create python virtual environment and install package
+    let status = Command::new("python3")
+        .args(["-m", "venv", &venv_name])
+        .current_dir(&bin_dir)
+        .status()?;
+    if !status.success() {
+        return Err(format!("Venv creation failed: {}", status).into());
+    }
+    let status = Command::new(venv_dir.join("bin/pip"))
+        .args(["install", &format!("{}=={}", spec.pkg, meta.version)])
+        .status()?;
+    if !status.success() {
+        return Err(format!("Installation failed for {}: {}", spec.pkg, status).into());
+    }
+
+    // Create symlink to install location, ONLY if specified
+    let bin_dst = bin_dir.join(match spec.bin.rsplit_once('/') {
+        None => spec.bin.as_str(),
+        Some((_, basename)) => basename,
+    });
+    if bin_dst.exists() {
+        fs::remove_file(&bin_dst)?;
+    }
+    self::create_symlink(venv_dir.join(&spec.bin), bin_dst)?;
+
     Ok(())
 }
 
@@ -219,13 +280,11 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
     self::fetch_asset_with_progress(&spec.url, &script_path)?;
 
     // Execute the script
-    let mut command = std::process::Command::new(&spec.cmd);
-    command
+    let status = Command::new(&spec.cmd)
         .arg(&script_path)
         .args(spec.args.split_ascii_whitespace())
-        .envs(spec.env.clone());
-    dbg!(&command);
-    let status = command.status()?;
+        .envs(spec.env.clone())
+        .status()?;
     if !status.success() {
         return Err(format!("Script execution failed: {}", status).into());
     }

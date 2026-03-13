@@ -58,11 +58,6 @@ fn upgrade_self(release: bool) -> utils::Result<()> {
 }
 
 fn install_pde(ctx: &Context) -> utils::Result<()> {
-    // Check if git is installed and available
-    if !utils::has_command("git") {
-        return Err("'git' command not found!".into());
-    }
-
     // Clone PDE (main) to target location, if it does not exist
     let cwd = std::env::current_dir()?;
     if utils::in_pde_root() && cwd != ctx.pde_dir {
