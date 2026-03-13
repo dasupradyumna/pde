@@ -68,16 +68,7 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
         .into());
     } else if !utils::in_pde_root() && !ctx.pde_dir.exists() {
         println!("Cloning PDE ...");
-
-        // TODO: move to SSH-based cloning, useful for dev work
-        Command::new("git")
-            .args(&[
-                "clone",
-                "https://github.com/dasupradyumna/pde",
-                &ctx.pde_dir.to_string_lossy(),
-            ])
-            .status()
-            .map_err(|e| format!("Failed to clone PDE: {e}"))?;
+        utils::clone_github("dasupradyumna/pde", "main", &ctx.pde_dir, false)?;
 
         // Move pde-manager binary to the newly cloned PDE directory
         fs::copy(std::env::current_exe()?, ctx.pde_dir.join("pde-manager"))?;

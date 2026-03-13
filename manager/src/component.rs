@@ -47,8 +47,10 @@ enum Installer {
 
 #[derive(Debug, Deserialize)]
 struct BuildSpec {
-    _repo: String,
-    _commands: Vec<String>,
+    repo: String,
+    #[serde(default)]
+    tag: String,
+    commands: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,7 +87,16 @@ struct ScriptSpec {
 impl Component {
     pub fn resolve_placeholders(&mut self, ctx: &Context) -> &mut Self {
         match &mut self.installer {
-            Installer::BuildSource(_spec) => {}
+            Installer::BuildSource(spec) => {
+                spec.tag = if spec.tag.is_empty() {
+                    self.meta.version.clone()
+                } else {
+                    spec.tag.replace("{version}", &self.meta.version)
+                };
+                spec.commands.iter_mut().for_each(|cmd| {
+                    *cmd = cmd.replace("{install_prefix}", &ctx.install_prefix.to_string_lossy())
+                });
+            }
             Installer::PythonVenv(spec) => {
                 spec.pkg = spec.pkg.replace("{name}", &self.meta.name);
                 if spec.bin.is_empty() {
@@ -135,7 +146,28 @@ impl Component {
     }
 }
 
-fn build_from_source(_ctx: &Context, _meta: &Metadata, _spec: &BuildSpec) -> utils::Result<()> {
+fn build_from_source(ctx: &Context, meta: &Metadata, spec: &BuildSpec) -> utils::Result<()> {
+    // Clone specific tag of GitHub repository to temp directory
+    let clone_dir = ctx.temp_dir.join(&meta.name);
+    utils::clone_github(&spec.repo, &spec.tag, &clone_dir, true)?;
+
+    // Execute build command list sequentially
+    for command in &spec.commands {
+        // Split build command into program & arguments
+        let mut parts = command.split_ascii_whitespace();
+        let prog = parts.next().unwrap_or("");
+        let args: Vec<&str> = parts.collect();
+
+        // Execute the build command
+        let status = Command::new(&prog)
+            .args(&args)
+            .current_dir(&clone_dir)
+            .status()?;
+        if !status.success() {
+            return Err(format!("Build command failed: {status}").into());
+        }
+    }
+
     Ok(())
 }
 

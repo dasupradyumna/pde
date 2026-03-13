@@ -75,15 +75,19 @@ bin = "{asset}/{name}"
 
 ############################ NEOVIM COMPONENTS ############################
 
-# [[list]]
-# group = "neovim"
-# [list.meta]
-# name = "neovim"
-# version = "0.11.5"
-# [list.installer]
-# type = "build_source"
-# repo = "neovim/neovim"
-# commands = ["make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=$LOCAL_DIR", "make install"]
+[[list]]
+group = "neovim"
+[list.meta]
+name = "neovim"
+version = "0.11.6"
+[list.installer]
+type = "build_source"
+repo = "neovim/neovim"
+tag = "v{version}"
+commands = [
+    "make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX={install_prefix}",
+    "make install",
+]
 
 [[list]]
 group = "neovim"
