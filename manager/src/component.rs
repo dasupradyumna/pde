@@ -16,6 +16,7 @@ pub struct Manifest {
 
 #[derive(Debug, Deserialize)]
 pub struct Component {
+    #[allow(dead_code)]
     group: Group,
     pub meta: Metadata,
     installer: Installer,

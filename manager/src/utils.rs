@@ -11,10 +11,6 @@ pub fn home() -> &'static PathBuf {
     HOME.get_or_init(|| home::home_dir().expect("$HOME environment variable not set"))
 }
 
-pub fn has_command(command: &str) -> bool {
-    which::which(command).is_ok()
-}
-
 pub fn print_err<Msg>(msg: Msg)
 where
     Msg: Display,
