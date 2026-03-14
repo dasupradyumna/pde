@@ -7,6 +7,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Instant;
+use xz2::read::XzDecoder;
 
 #[derive(Debug, Deserialize)]
 pub struct Manifest {
@@ -32,7 +33,6 @@ enum Group {
 #[derive(Debug, Deserialize)]
 pub struct Metadata {
     pub name: String,
-    #[serde(default)]
     version: String,
 }
 
@@ -53,10 +53,10 @@ struct BuildSpec {
     commands: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 struct VenvSpec {
     pkg: String,
-    #[serde(default)]
     bin: String,
 }
 
@@ -67,9 +67,16 @@ struct ReleaseSpec {
     tag: String,
     asset: String,
     ext: String,
-    #[serde(default)]
-    pkg: bool,
-    bin: String,
+    install_as: InstallAssetAs,
+    path: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum InstallAssetAs {
+    Copy,
+    Folders,
+    Symlink,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,7 +105,11 @@ impl Component {
                 });
             }
             Installer::PythonVenv(spec) => {
-                spec.pkg = spec.pkg.replace("{name}", &self.meta.name);
+                if spec.pkg.is_empty() {
+                    spec.pkg = self.meta.name.clone();
+                } else {
+                    spec.pkg = spec.pkg.replace("{name}", &self.meta.name);
+                }
                 if spec.bin.is_empty() {
                     spec.bin = spec.pkg.clone();
                 }
@@ -116,8 +127,8 @@ impl Component {
                     .replace("{name}", &self.meta.name)
                     .replace("{version}", &self.meta.version);
                 // Binary
-                spec.bin = spec
-                    .bin
+                spec.path = spec
+                    .path
                     .replace("{asset}", &spec.asset)
                     .replace("{name}", &self.meta.name)
                     .replace("{version}", &self.meta.version);
@@ -245,6 +256,12 @@ fn fetch_and_install_asset(
             tar.unpack(&work_dir)?;
         }
 
+        ".tar.xz" => {
+            let xz = XzDecoder::new(&asset);
+            let mut tar = tar::Archive::new(xz);
+            tar.unpack(&work_dir)?;
+        }
+
         ".tar" => {
             let mut tar = tar::Archive::new(&asset);
             tar.unpack(&work_dir)?;
@@ -252,8 +269,14 @@ fn fetch_and_install_asset(
 
         ".gz" => {
             let gz = GzDecoder::new(&asset);
-            let mut extracted = File::create(work_dir.join(&spec.bin))?;
+            let mut extracted = File::create(work_dir.join(&spec.path))?;
             std::io::copy(&mut std::io::BufReader::new(gz), &mut extracted)?;
+        }
+
+        ".xz" => {
+            let xz = XzDecoder::new(&asset);
+            let mut extracted = File::create(work_dir.join(&spec.path))?;
+            std::io::copy(&mut std::io::BufReader::new(xz), &mut extracted)?;
         }
 
         ".zip" | ".vsix" => {
@@ -261,7 +284,7 @@ fn fetch_and_install_asset(
             zip.extract(&work_dir)?;
         }
 
-        "" => fs::rename(&asset_path, work_dir.join(&spec.bin))?,
+        "" => fs::rename(&asset_path, work_dir.join(&spec.path))?,
 
         _ => return Err(format!("Unsupported asset file extension: {}", spec.ext).into()),
     }
@@ -271,13 +294,13 @@ fn fetch_and_install_asset(
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(work_dir.join(&spec.bin), fs::Permissions::from_mode(0o755))?;
+        fs::set_permissions(work_dir.join(&spec.path), fs::Permissions::from_mode(0o755))?;
     }
 
     // Get binary installation directory and destination file path
     let bin_dir = ctx.install_prefix.join("bin");
-    let bin_dst = bin_dir.join(match spec.bin.rsplit_once('/') {
-        None => spec.bin.as_str(),
+    let bin_dst = bin_dir.join(match spec.path.rsplit_once('/') {
+        None => spec.path.as_str(),
         Some((_, basename)) => basename,
     });
 
@@ -285,19 +308,61 @@ fn fetch_and_install_asset(
     if bin_dst.exists() {
         fs::remove_file(&bin_dst)?; // Remove existing binary
     }
-    if spec.pkg {
-        // Install package
-        let pkg_dst = bin_dir.join(format!(".{}", meta.name));
-        if pkg_dst.exists() {
-            fs::remove_dir_all(&pkg_dst)?; // Remove existing package
+    match &spec.install_as {
+        InstallAssetAs::Copy => {
+            // Install binary
+            fs::rename(work_dir.join(&spec.path), &bin_dst)?;
         }
-        fs::rename(&work_dir, &pkg_dst)?;
+        InstallAssetAs::Folders => {
+            // Get the root directory inside asset
+            let root_dir = work_dir.join(&spec.path);
+            if !root_dir.exists() || !root_dir.is_dir() {
+                return Err(format!(
+                    "Folders install path not found or not a directory: {root_dir:?}",
+                )
+                .into());
+            }
 
-        // Create symlink to binary inside package
-        self::create_symlink(pkg_dst.join(&spec.bin), bin_dst)?;
-    } else {
-        // Install binary
-        fs::rename(work_dir.join(&spec.bin), &bin_dst)?;
+            // Check for each standard directory
+            for folder_name in &["bin", "lib", "share"] {
+                // Get source and destination directory paths
+                let src_dir = root_dir.join(folder_name);
+                let dst_dir = ctx.install_prefix.join(folder_name);
+                if !src_dir.exists() {
+                    continue;
+                }
+
+                // Iterate over every entry found (file or directory)
+                for entry in fs::read_dir(&src_dir)? {
+                    // Get source and destination entry paths
+                    let entry = entry?;
+                    let entry_name = entry.file_name();
+                    let src_entry = entry.path();
+                    let dst_entry = dst_dir.join(&entry_name);
+
+                    // Remove existing entry
+                    if dst_entry.exists() {
+                        if dst_entry.is_dir() {
+                            fs::remove_dir_all(&dst_entry)?;
+                        } else {
+                            fs::remove_file(&dst_entry)?;
+                        }
+                    }
+                    fs::rename(&src_entry, &dst_entry)?;
+                }
+            }
+        }
+        InstallAssetAs::Symlink => {
+            // Install asset as package
+            let pkg_dst = bin_dir.join(format!(".{}", meta.name));
+            if pkg_dst.exists() {
+                fs::remove_dir_all(&pkg_dst)?; // Remove existing package
+            }
+            fs::rename(&work_dir, &pkg_dst)?;
+
+            // Create symlink to binary inside package
+            self::create_symlink(pkg_dst.join(&spec.path), bin_dst)?;
+        }
     }
 
     Ok(())

@@ -1,5 +1,18 @@
 #################################### INSTALL SPECIFICATION LIST ####################################
 
+[[list]]
+group = "wezterm"
+[list.meta]
+name = "wezterm"
+version = "nightly"
+[list.installer]
+type = "release_asset"
+repo = "wezterm/wezterm"
+asset = "{name}-{version}.Ubuntu24.04"
+ext = ".tar.xz"
+install_as = "folders"
+path = "{name}/usr"
+
 ############################## AI COMPONENTS ##############################
 
 # TODO: Currently unused. Test in docker sandbox before using.
@@ -7,6 +20,7 @@
 # group = "ai"
 # [list.meta]
 # name = "aider"
+# version = "latest"
 # [list.installer]
 # type = "run_script"
 # url = "https://aider.chat/install.sh"
@@ -23,7 +37,8 @@ repo = "anomalyco/opencode"
 tag = "v{version}"
 asset = "{name}-linux-x64"
 ext = ".tar.gz"
-bin = "{name}"
+install_as = "copy"
+path = "{name}"
 # XXX: remove if above method works fine
 # type = "run_script"
 # url = "https://opencode.ai/install"
@@ -45,7 +60,8 @@ repo = "jesseduffield/lazygit"
 tag = "v{version}"
 asset = "{name}_{version}_linux_x86_64"
 ext = ".tar.gz"
-bin = "{name}"
+install_as = "copy"
+path = "{name}"
 
 [[list]]
 group = "git"
@@ -57,7 +73,8 @@ type = "release_asset"
 repo = "dandavison/delta"
 asset = "{name}-{version}-x86_64-unknown-linux-gnu"
 ext = ".tar.gz"
-bin = "{asset}/{name}"
+install_as = "copy"
+path = "{asset}/{name}"
 
 # TODO: maybe AptLocal
 # [[list]]
@@ -99,7 +116,8 @@ type = "release_asset"
 repo = "BurntSushi/ripgrep"
 asset = "{name}-{version}-x86_64-unknown-linux-musl"
 ext = ".tar.gz"
-bin = "{asset}/rg"
+install_as = "copy"
+path = "{asset}/rg"
 
 [[list]]
 group = "neovim"
@@ -112,7 +130,10 @@ repo = "tree-sitter/tree-sitter"
 tag = "v{version}"
 asset = "{name}-linux-x64"
 ext = ".gz"
-bin = "{name}"
+install_as = "copy"
+path = "{name}"
+
+################ LANGUAGE SERVERS ################
 
 [[list]]
 group = "neovim"
@@ -124,8 +145,8 @@ type = "release_asset"
 repo = "clangd/clangd"
 asset = "{name}-linux-{version}"
 ext = ".zip"
-pkg = true
-bin = "{name}_{version}/bin/{name}"
+install_as = "folders"
+path = "{name}_{version}"
 
 [[list]]
 group = "neovim"
@@ -137,8 +158,10 @@ type = "release_asset"
 repo = "LuaLS/lua-language-server"
 asset = "{name}-{version}-linux-x64"
 ext = ".tar.gz"
-pkg = true
-bin = "bin/{name}"
+install_as = "symlink"
+path = "bin/{name}"
+
+################# DEBUG ADAPTERS #################
 
 [[list]]
 group = "neovim"
@@ -151,8 +174,8 @@ repo = "vadimcn/codelldb"
 tag = "v{version}"
 asset = "{name}-linux-x64"
 ext = ".vsix"
-pkg = true
-bin = "extension/adapter/{name}"
+install_as = "symlink"
+path = "extension/adapter/{name}"
 
 [[list]]
 group = "neovim"
@@ -161,7 +184,3 @@ name = "debugpy"
 version = "1.8.20"
 [list.installer]
 type = "python_venv"
-pkg = "{name}"
-
-############################ WEZTERM COMPONENTS ###########################
-# TODO: implement this - wezterm
