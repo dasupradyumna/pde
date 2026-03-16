@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
 
@@ -51,4 +51,16 @@ where
     } else {
         Ok(())
     }
+}
+
+pub fn create_symlink<From, To>(from: From, to: To) -> self::Result<()>
+where
+    From: AsRef<Path>,
+    To: AsRef<Path>,
+{
+    #[cfg(unix)]
+    return Ok(std::os::unix::fs::symlink(from, to)?);
+
+    #[cfg(windows)]
+    return Ok(std::os::windows::fs::symlink_file(from, to)?);
 }

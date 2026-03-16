@@ -12,20 +12,7 @@ set +o braceexpand
 set +o histexpand
 shopt -s checkhash checkjobs dirspell hostcomplete huponexit progcomp_alias shift_verbose
 
-# Set environment variables
-# FIGNORE, LS_COLORS
+# Source all custom bash modules in current script directory
+for module in "$(dirname -- "${BASH_SOURCE[0]}")"/*.sh; do source "$module"; done
 
-# Ensures terminal supports 256 colors + truecolor
-[ "$TERM" != "xterm-256color" ] && export TERM=xterm-256color
-[ "$COLORTERM" != "truecolor" ] && export COLORTERM=truecolor
-
-# Get parent directory of this script, i.e. config/bash
-curr_dir="$(dirname -- "${BASH_SOURCE[0]}")"
-
-# Source all custom bash modules
-for module in "$curr_dir"/*.sh; do source "$module"; done
-
-# Ensure all readline programs use custom inputrc
-export INPUTRC="$curr_dir/inputrc"
-
-unset -v module curr_dir
+unset -v module

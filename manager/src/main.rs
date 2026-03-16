@@ -21,7 +21,6 @@ fn main() {
         Mode::ManageTools(ctx) => {
             let res = install_pde(&ctx);
             // Clean up temp directory before exiting
-            // TODO: this does not happen on SIGINT
             fs::remove_dir_all(&ctx.temp_dir).unwrap_or_else(|e| {
                 utils::print_err(format!("Clean-up failed for {:?}: {e}", ctx.temp_dir));
             });
@@ -92,10 +91,73 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     for mut component in manifest.list {
         // TODO: if component / group is disabled or already installed, then skip
         component.resolve_placeholders(&ctx).install(&ctx)?;
-        // TODO: copy config - target dir??
     }
+    self::manage_configs(ctx)?;
 
     // TODO: Display total time taken by the script
+
+    Ok(())
+}
+
+fn manage_configs(ctx: &Context) -> utils::Result<()> {
+    // Ensure destination directory exists
+    let dst_dir = utils::home().join(".config"); // TODO: handle windows path also here
+    fs::create_dir_all(&dst_dir)?;
+
+    for config in fs::read_dir(ctx.pde_dir.join("config"))? {
+        let config = config?;
+        let config_name = config.file_name();
+
+        if config_name != "bash" {
+            // All other tools just need their config folders symlink to standard config path
+            let src_config = config.path();
+            let dst_config = dst_dir.join(&config_name);
+
+            // Remove existing symlink
+            if dst_config.exists() {
+                if !dst_config.is_symlink() {
+                    return Err(
+                        format!("Existing config for {config_name:?} is not symlink!").into(),
+                    );
+                }
+                fs::remove_file(&dst_config)?;
+            }
+            utils::create_symlink(&src_config, &dst_config)?;
+            continue;
+        }
+
+        // Manage PDE environment on login
+        let profile_path = {
+            let bash_profile = utils::home().join(".bash_profile");
+            let profile = utils::home().join(".profile");
+            if bash_profile.exists() {
+                bash_profile
+            } else {
+                profile
+            }
+        };
+        let entrypoint = format!(
+            "\n# >>> PDE-ENVIRONMENT >>>\nsource {}/config/bash/env\n# <<< PDE-ENVIRONMENT <<<",
+            ctx.pde_dir.display()
+        );
+        let content = fs::read_to_string(&profile_path).unwrap_or_default();
+        if !content.contains(">>> PDE-ENTRYPOINT >>>") {
+            fs::write(&profile_path, format!("{}{}", content, entrypoint))?;
+            println!("Added PDE bash entry point to {:?}", profile_path);
+        }
+
+        // Manage bash entry point
+        let bashrc = utils::home().join(".bashrc");
+        let entrypoint = format!(
+            "\n# >>> PDE-ENTRYPOINT >>>\nsource {}/config/bash/init.sh\n# <<< PDE-ENTRYPOINT <<<",
+            ctx.pde_dir.display()
+        );
+        let content = fs::read_to_string(&bashrc).unwrap_or_default();
+        if !content.contains(">>> PDE-ENTRYPOINT >>>") {
+            fs::write(&bashrc, format!("{}{}", content, entrypoint))?;
+            println!("Added PDE bash entry point to {:?}", bashrc);
+        }
+    }
 
     Ok(())
 }

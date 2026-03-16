@@ -1,0 +1,24 @@
+################################### CUSTOM ENVIRONMENT VARIABLES ###################################
+# ex: ft=bash
+
+# Ensures terminal supports 256 colors + truecolor
+[ "$TERM" != "xterm-256color" ] && export TERM=xterm-256color
+[ "$COLORTERM" != "truecolor" ] && export COLORTERM=truecolor
+
+# Ensure all readline programs use custom inputrc
+export INPUTRC="$(dirname -- "${BASH_SOURCE[0]}")/inputrc"
+
+# Set environment variables
+# FIGNORE, LS_COLORS
+HISTFILESIZE=5000
+
+# Ensure path ($2) is in the environment variable ($1)
+ensure_path_in_env() {
+    local -r env="$1" path="$2"
+    case ":${!env}:" in
+        *:"$path":*) ;;
+        *) export "$env"="$path:${!env}" ;;
+    esac
+}
+ensure_path_in_env 'PATH' "$HOME/.pde/bin"
+ensure_path_in_env 'XDG_DATA_DIRS' "$HOME/.pde/share"

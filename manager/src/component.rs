@@ -4,7 +4,7 @@ use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 use xz2::read::XzDecoder;
@@ -213,7 +213,7 @@ fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> ut
     if bin_dst.exists() {
         fs::remove_file(&bin_dst)?;
     }
-    self::create_symlink(venv_dir.join("bin").join(&spec.bin), bin_dst)?;
+    utils::create_symlink(venv_dir.join("bin").join(&spec.bin), bin_dst)?;
 
     Ok(())
 }
@@ -337,9 +337,8 @@ fn fetch_and_install_asset(
                 for entry in fs::read_dir(&src_dir)? {
                     // Get source and destination entry paths
                     let entry = entry?;
-                    let entry_name = entry.file_name();
                     let src_entry = entry.path();
-                    let dst_entry = dst_dir.join(&entry_name);
+                    let dst_entry = dst_dir.join(entry.file_name());
 
                     // Remove existing entry
                     if dst_entry.exists() {
@@ -362,7 +361,7 @@ fn fetch_and_install_asset(
             fs::rename(&work_dir, &pkg_dst)?;
 
             // Create symlink to binary inside package
-            self::create_symlink(pkg_dst.join(&spec.path), bin_dst)?;
+            utils::create_symlink(pkg_dst.join(&spec.path), bin_dst)?;
         }
     }
 
@@ -399,22 +398,10 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
         if bin_dst.exists() {
             fs::remove_file(&bin_dst)?;
         }
-        self::create_symlink(&spec.bin, bin_dst)?;
+        utils::create_symlink(&spec.bin, bin_dst)?;
     }
 
     Ok(())
-}
-
-fn create_symlink<From, To>(from: From, to: To) -> utils::Result<()>
-where
-    From: AsRef<Path>,
-    To: AsRef<Path>,
-{
-    #[cfg(unix)]
-    return Ok(std::os::unix::fs::symlink(from, to)?);
-
-    #[cfg(windows)]
-    return Ok(std::os::windows::fs::symlink_file(from, to)?);
 }
 
 fn fetch_asset_with_progress(
