@@ -39,13 +39,6 @@ asset = "{name}-linux-x64"
 ext = ".tar.gz"
 install_as = "copy"
 path = "{name}"
-# XXX: remove if above method works fine
-# type = "run_script"
-# url = "https://opencode.ai/install"
-# cmd = "bash"
-# args = "--no-modify-path --version {version}"
-# bin = "{install_prefix}/bin/.opencode/bin/opencode"
-# env = [["INSTALL_DIR", "{install_prefix}/bin"]]
 
 ############################## GIT COMPONENTS #############################
 

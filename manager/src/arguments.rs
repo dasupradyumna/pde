@@ -1,3 +1,6 @@
+/////////////////////////////////// COMMAND-LINE ARGUMENT PARSER ///////////////////////////////////
+
+use crate::log;
 use crate::utils;
 use std::fs;
 use std::path::PathBuf;
@@ -17,6 +20,7 @@ pub struct Context {
     pub install_prefix: PathBuf,
 }
 
+/// Display help message with full command-line argument descriptions
 pub fn help() {
     println!("Usage: pde-manager [OPTIONS]\n");
     println!("  -h                  Show this help message and exit");
@@ -28,48 +32,86 @@ pub fn help() {
     println!("                      (Assumes CWD is PDE root; fails otherwise)");
 }
 
+/// Parse command-line arguments to return execution mode and its context
 pub fn parse() -> utils::Result<Mode> {
+    // Tool management context flags
     let mut arg_b = None;
     let mut arg_c = None;
     let mut arg_i = None;
 
+    // Core parser loop
     let mut parser = lexopt::Parser::from_env();
     while let Some(arg) = parser.next()? {
         match arg {
+            /////////////////// TOOL MANAGEMENT FLAGS //////////////////
             // Show help
             lexopt::Arg::Short('h') => {
                 self::help();
                 process::exit(0);
-            }
+            },
             // Clone target branch
             lexopt::Arg::Short('b') => arg_b = Some(parser.value()?.to_string_lossy().to_string()),
-            // Clone directory path
+            // Clone parent directory
             lexopt::Arg::Short('c') => arg_c = Some(PathBuf::from(parser.value()?)),
             // Installation prefix
             lexopt::Arg::Short('i') => arg_i = Some(PathBuf::from(parser.value()?)),
 
-            // Upgrade PDE manager binary
-            lexopt::Arg::Long("upgrade") => return Ok(Mode::UpgradeSelf(true)),
-            lexopt::Arg::Long("upgrade-debug") => return Ok(Mode::UpgradeSelf(false)),
+            //////////////////// SELF UPGRADE FLAGS ////////////////////
+            // Release build
+            lexopt::Arg::Long("upgrade") => {
+                log!(info, "\nParsed self upgrade flag: release");
+                return Ok(Mode::UpgradeSelf(true));
+            },
+            // Debug build
+            lexopt::Arg::Long("upgrade-debug") => {
+                log!(info, "\nParsed self upgrade flag: debug");
+                return Ok(Mode::UpgradeSelf(false));
+            },
 
-            /////////////////// UNEXPECTED ARGUMENTS ///////////////////
+            ///////////////////// UNSUPPORTED FLAGS ////////////////////
             lexopt::Arg::Short(c) => {
                 return Err(format!("Unexpected argument: -{c}").into());
-            }
+            },
             lexopt::Arg::Long(l) => {
                 return Err(format!("Unexpected argument: --{l}").into());
-            }
+            },
             lexopt::Arg::Value(v) => {
                 return Err(format!("Unexpected value: {}", v.to_string_lossy()).into());
-            }
+            },
         }
     }
 
-    // Check missing arguments and apply defaults or throw error
-    let arg_b = arg_b.unwrap_or_else(|| "main".to_string());
-    let arg_c = arg_c.unwrap_or_else(|| utils::home().join("projects"));
-    let arg_i = arg_i.ok_or_else(|| "Missing argument: -i (install prefix)")?;
+    log!(info, "\nParsing command-line arguments ...");
 
+    // Check missing arguments and apply defaults or throw error
+    let arg_b = match arg_b {
+        Some(branch) => {
+            log!(info, "- Parsed clone target branch: {branch}");
+            branch
+        },
+        None => {
+            let default = "main".to_string();
+            log!(info, "- Applying default to clone target branch: {default}");
+            default
+        },
+    };
+    let arg_c = match arg_c {
+        Some(clone_dir) => {
+            log!(info, "- Parsed clone parent dir: {clone_dir:?}");
+            clone_dir
+        },
+        None => {
+            let default = utils::home().join("projects");
+            log!(info, "- Applying default to clone parent dir: {default:?}");
+            default
+        },
+    };
+    let Some(arg_i) = arg_i else {
+        return Err("Missing argument: -i (install prefix dir)".into());
+    };
+    log!(info, "- Parsed install prefix dir: {arg_i:?}");
+
+    // Validate tool management context
     let ctx = validate(arg_b, arg_c, arg_i)?;
     Ok(Mode::ManageTools(ctx))
 }

@@ -1,4 +1,7 @@
+//////////////////////////////////// MANIFEST COMPONENT METADATA ///////////////////////////////////
+
 use crate::arguments::Context;
+use crate::log;
 use crate::utils;
 use flate2::read::GzDecoder;
 use serde::Deserialize;
@@ -104,7 +107,7 @@ impl Component {
                 spec.commands.iter_mut().for_each(|cmd| {
                     *cmd = cmd.replace("{install_prefix}", &ctx.install_prefix.to_string_lossy())
                 });
-            }
+            },
             Installer::PythonVenv(spec) => {
                 if spec.pkg.is_empty() {
                     spec.pkg = self.meta.name.clone();
@@ -114,7 +117,7 @@ impl Component {
                 if spec.bin.is_empty() {
                     spec.bin = spec.pkg.clone();
                 }
-            }
+            },
             Installer::ReleaseAsset(spec) => {
                 // Tag
                 spec.tag = if spec.tag.is_empty() {
@@ -127,23 +130,16 @@ impl Component {
                     .asset
                     .replace("{name}", &self.meta.name)
                     .replace("{version}", &self.meta.version);
-                // Binary
+                // Path
                 spec.path = spec
                     .path
                     .replace("{asset}", &spec.asset)
                     .replace("{name}", &self.meta.name)
                     .replace("{version}", &self.meta.version);
-            }
-            Installer::RunScript(spec) => {
-                // XXX: Required for opencode, remove if that is confirmed to use ReleaseAsset
-                let install_prefix = ctx.install_prefix.to_string_lossy();
-                spec.args = spec.args.replace("{version}", &self.meta.version);
-                spec.bin = spec.bin.replace("{install_prefix}", &install_prefix);
-                spec.env.iter_mut().for_each(|(_, v)| {
-                    *v = v.replace("{install_prefix}", &install_prefix);
-                });
-            }
+            },
+            Installer::RunScript(_) => {},
         }
+        log!(info, "- Resolved placeholders in component fields");
         self
     }
 
@@ -161,25 +157,27 @@ impl Component {
 fn build_from_source(ctx: &Context, meta: &Metadata, spec: &BuildSpec) -> utils::Result<()> {
     // Clone specific tag of GitHub repository to temp directory
     let clone_dir = ctx.temp_dir.join(&meta.name);
+    log!(info, "- Cloning repository to {:?} ...", clone_dir);
     utils::clone_github(&spec.repo, &spec.tag, &clone_dir, true)?;
 
     // Execute build command list sequentially
     for command in &spec.commands {
+        log!(info, "- Executing command: {command:?} ...");
+
         // Split build command into program & arguments
         let mut parts = command.split_ascii_whitespace();
         let prog = parts.next().unwrap_or("");
         let args: Vec<&str> = parts.collect();
+        log!(debug, "Program: {prog} | Arguments: {args:?}");
 
         // Execute the build command
-        let status = Command::new(&prog)
-            .args(&args)
-            .current_dir(&clone_dir)
-            .status()?;
+        let status = Command::new(&prog).args(&args).current_dir(&clone_dir).status()?;
         if !status.success() {
             return Err(format!("Build command failed: {status}").into());
         }
     }
 
+    log!(info, "- Building from source completed!");
     Ok(())
 }
 
@@ -187,10 +185,12 @@ fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> ut
     let venv_name = format!(".{}", meta.name);
     let bin_dir = ctx.install_prefix.join("bin");
     let venv_dir = bin_dir.join(&venv_name);
+    log!(info, "- Python virtual environment target path: {venv_dir:?}");
 
     // Delete existing virtual environment, if any
     if venv_dir.exists() {
         fs::remove_dir_all(&venv_dir)?;
+        log!(debug, "Removed existing virtual environment");
     }
 
     // Create python virtual environment and install package
@@ -201,19 +201,24 @@ fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> ut
     if !status.success() {
         return Err(format!("Venv creation failed: {}", status).into());
     }
+    log!(info, "- Created virtual environment successfully");
     let status = Command::new(venv_dir.join("bin/pip"))
         .args(["install", &format!("{}=={}", spec.pkg, meta.version)])
         .status()?;
     if !status.success() {
         return Err(format!("Installation failed for {}: {}", spec.pkg, status).into());
     }
+    log!(info, "- Installed {venv_name:?} package in virtual environment");
 
     // Create symlink to install location, ONLY if specified
     let bin_dst = bin_dir.join(&spec.bin);
     if bin_dst.exists() {
         fs::remove_file(&bin_dst)?;
+        log!(debug, "Removed existing symlink to package binary");
     }
-    utils::create_symlink(venv_dir.join("bin").join(&spec.bin), bin_dst)?;
+    let bin_src = venv_dir.join("bin").join(&spec.bin);
+    utils::create_symlink(&bin_src, &bin_dst)?;
+    log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
 
     Ok(())
 }
@@ -227,6 +232,7 @@ fn fetch_and_install_asset(
     let work_dir = ctx.temp_dir.join(&meta.name);
     fs::create_dir_all(&work_dir)
         .map_err(|e| format!("Failed to create working directory: {e}"))?;
+    log!(debug, "Created working directory: {work_dir:?}");
 
     // Download the asset and get its filename
     let asset_path = {
@@ -235,7 +241,7 @@ fn fetch_and_install_asset(
             "https://github.com/{}/releases/download/{}/{}{}",
             spec.repo, spec.tag, spec.asset, spec.ext
         );
-        dbg!(&url);
+        log!(debug, "Asset URL: {url}");
 
         // Construct the asset file path
         let asset_path = ctx
@@ -255,37 +261,46 @@ fn fetch_and_install_asset(
             let gz = GzDecoder::new(&asset);
             let mut tar = tar::Archive::new(gz);
             tar.unpack(&work_dir)?;
-        }
+            log!(info, "- Extracted TarGz compressed archive to {work_dir:?}");
+        },
 
         ".tar.xz" => {
             let xz = XzDecoder::new(&asset);
             let mut tar = tar::Archive::new(xz);
             tar.unpack(&work_dir)?;
-        }
+            log!(info, "- Extracted TarXz compressed archive to {work_dir:?}");
+        },
 
         ".tar" => {
             let mut tar = tar::Archive::new(&asset);
             tar.unpack(&work_dir)?;
-        }
+            log!(info, "- Extracted Tar archive to {work_dir:?}");
+        },
 
         ".gz" => {
             let gz = GzDecoder::new(&asset);
             let mut extracted = File::create(work_dir.join(&spec.path))?;
             std::io::copy(&mut std::io::BufReader::new(gz), &mut extracted)?;
-        }
+            log!(info, "- Extracted Gz compressed file to {work_dir:?}");
+        },
 
         ".xz" => {
             let xz = XzDecoder::new(&asset);
             let mut extracted = File::create(work_dir.join(&spec.path))?;
             std::io::copy(&mut std::io::BufReader::new(xz), &mut extracted)?;
-        }
+            log!(info, "- Extracted Xz compressed file to {work_dir:?}");
+        },
 
         ".zip" | ".vsix" => {
             let mut zip = zip::ZipArchive::new(asset)?;
             zip.extract(&work_dir)?;
-        }
+            log!(info, "- Extracted Zip file to {work_dir:?}");
+        },
 
-        "" => fs::rename(&asset_path, work_dir.join(&spec.path))?,
+        "" => {
+            fs::rename(&asset_path, work_dir.join(&spec.path))?;
+            log!(info, "- Moved raw asset file to {work_dir:?}");
+        },
 
         _ => return Err(format!("Unsupported asset file extension: {}", spec.ext).into()),
     }
@@ -296,6 +311,7 @@ fn fetch_and_install_asset(
     {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(work_dir.join(&spec.path), fs::Permissions::from_mode(0o755))?;
+        log!(debug, "Ensured binary is executable [Unix]");
     }
 
     // Get binary installation directory and destination file path
@@ -308,12 +324,14 @@ fn fetch_and_install_asset(
     // Handle final binary installation
     if bin_dst.exists() {
         fs::remove_file(&bin_dst)?; // Remove existing binary
+        log!(debug, "Removed existing binary in installation directory");
     }
     match &spec.install_as {
         InstallAssetAs::Copy => {
             // Install binary
             fs::rename(work_dir.join(&spec.path), &bin_dst)?;
-        }
+            log!(info, "- Installed binary to {bin_dst:?}");
+        },
         InstallAssetAs::Folders => {
             // Get the root directory inside asset
             let root_dir = work_dir.join(&spec.path);
@@ -323,6 +341,7 @@ fn fetch_and_install_asset(
                 )
                 .into());
             }
+            log!(debug, "Package root directory: {root_dir:?}");
 
             // Check for each standard directory
             for folder_name in &["bin", "lib", "share"] {
@@ -334,6 +353,7 @@ fn fetch_and_install_asset(
                 }
 
                 // Iterate over every entry found (file or directory)
+                log!(info, "- Moving items from {root_dir:?} to {:?}", ctx.install_prefix);
                 for entry in fs::read_dir(&src_dir)? {
                     // Get source and destination entry paths
                     let entry = entry?;
@@ -347,22 +367,28 @@ fn fetch_and_install_asset(
                         } else {
                             fs::remove_file(&dst_entry)?;
                         }
+                        log!(debug, "Removed existing item: {dst_entry:?}");
                     }
                     fs::rename(&src_entry, &dst_entry)?;
+                    log!(info, "  - Moved item: {:?}", entry.file_name());
                 }
             }
-        }
+        },
         InstallAssetAs::Symlink => {
             // Install asset as package
             let pkg_dst = bin_dir.join(format!(".{}", meta.name));
             if pkg_dst.exists() {
                 fs::remove_dir_all(&pkg_dst)?; // Remove existing package
+                log!(debug, "Removed existing package in installation directory");
             }
             fs::rename(&work_dir, &pkg_dst)?;
+            log!(info, "- Installed extracted package to {pkg_dst:?}");
 
             // Create symlink to binary inside package
-            utils::create_symlink(pkg_dst.join(&spec.path), bin_dst)?;
-        }
+            let bin_src = pkg_dst.join(&spec.path);
+            utils::create_symlink(&bin_src, &bin_dst)?;
+            log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
+        },
     }
 
     Ok(())
@@ -371,6 +397,7 @@ fn fetch_and_install_asset(
 fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> utils::Result<()> {
     // Determine script file extension from cmd
     let script_path = ctx.temp_dir.join(format!("{}.{}", meta.name, spec.cmd));
+    log!(debug, "Download script path: {script_path:?}");
 
     // Fetch the script with progress
     self::fetch_asset_with_progress(&spec.url, &script_path)?;
@@ -384,6 +411,7 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
     if !status.success() {
         return Err(format!("Script execution failed: {}", status).into());
     }
+    log!(info, "- Executed script successfully");
 
     // Create symlink to install location, ONLY if specified
     if !spec.bin.is_empty() {
@@ -397,8 +425,10 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
         // Handle final binary installation
         if bin_dst.exists() {
             fs::remove_file(&bin_dst)?;
+            log!(debug, "Removed existing binary");
         }
-        utils::create_symlink(&spec.bin, bin_dst)?;
+        utils::create_symlink(&spec.bin, &bin_dst)?;
+        log!(info, "- Created a symlink: {:?} -> {bin_dst:?}", spec.bin);
     }
 
     Ok(())
@@ -423,12 +453,13 @@ fn fetch_asset_with_progress(
     let mut buffer = [0u8; 8192];
     let start_time = Instant::now();
     let mut downloaded = 0usize;
+    log!(info, "- Fetching asset to {asset_path:?} ...\n");
     loop {
         // Fetch the next chunk
         let n = response.read(&mut buffer)?;
         if n == 0 {
             if total_size > 0 {
-                println!(); // Preserve progress bar if rendered
+                println!("\n"); // Preserve progress bar if rendered
             }
             return Ok(());
         }
@@ -448,15 +479,15 @@ fn fetch_asset_with_progress(
                 0.0
             };
             let bar = format!(
-                "[{}{}] {}% {:.2} / {:.2} MB @ {:.2} MB/s\r",
-                "x".repeat(filled),
+                "▐{}{}▌ {}% {:.2} / {:.2} MB @ {:.2} MB/s\r",
+                "█".repeat(filled),
                 " ".repeat(empty),
                 100 * downloaded / total_size,
                 downloaded as f64 / (1024.0 * 1024.0),
                 total_size as f64 / (1024.0 * 1024.0),
                 speed
             );
-            print!("{}", bar);
+            print!("    {}", bar);
             std::io::stdout().flush()?;
         }
     }
