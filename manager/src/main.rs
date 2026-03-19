@@ -9,6 +9,7 @@ use crate::component::{InstallState, Manifest};
 use std::fs;
 use std::path::Path;
 use std::process::{self, Command};
+use std::time::Instant;
 
 fn main() {
     // Parse command-line arguments
@@ -71,6 +72,8 @@ fn upgrade_self(release: bool) -> utils::Result<()> {
 }
 
 fn install_pde(ctx: &Context) -> utils::Result<()> {
+    let start = Instant::now();
+
     // Set up SIGINT handler to clean up temp directory
     let temp_dir = ctx.temp_dir.clone();
     ctrlc::set_handler(move || {
@@ -125,9 +128,20 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
         state.save(&ctx.state_file)?;
     }
 
+    // Manage configs installation
     self::manage_configs(ctx)?;
 
-    // TODO: Display total time taken by the script
+    // Display elapsed time in human-readable format
+    let elapsed = start.elapsed().as_secs_f64();
+    let elapsed_i = elapsed as i64;
+    let time_str = if elapsed_i >= 3600 {
+        format!("{}h {}m {:.3}s", elapsed_i / 3600, (elapsed_i % 3600) / 60, elapsed % 60.)
+    } else if elapsed_i >= 60 {
+        format!("{}m {:.3}s", elapsed_i / 60, elapsed % 60.)
+    } else {
+        format!("{:.3}s", elapsed)
+    };
+    log!(info, "\n{}\nTotal time taken: {}", "-".repeat(100), time_str);
 
     Ok(())
 }
