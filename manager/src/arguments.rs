@@ -18,6 +18,7 @@ pub struct Context {
     pub pde_dir: PathBuf,
     pub temp_dir: PathBuf,
     pub install_prefix: PathBuf,
+    pub state_file: PathBuf,
 }
 
 /// Display help message with full command-line argument descriptions
@@ -150,14 +151,16 @@ fn validate(
         ensure_exists_and_writable(&install_prefix.join(dir))?;
     }
 
-    // Compute temporary directory
+    // Compute temporary directory and state file path
     let pde_dir = clone_dir.join("pde");
     let temp_dir = pde_dir.join("temp");
+    let state_file = pde_dir.join("state.toml");
 
     Ok(Context {
         pde_branch,
         pde_dir,
         temp_dir,
         install_prefix,
+        state_file,
     })
 }

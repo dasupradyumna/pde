@@ -3,14 +3,64 @@
 use crate::arguments::Context;
 use crate::log;
 use crate::utils;
+use chrono::{DateTime, Utc};
 use flate2::read::GzDecoder;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::Write;
-use std::path::PathBuf;
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Instant;
 use xz2::read::XzDecoder;
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct InstallState {
+    pub components: HashMap<String, ComponentState>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ComponentState {
+    pub version: String,
+    pub files: Vec<PathBuf>,
+    pub timestamp: DateTime<Utc>,
+}
+
+impl InstallState {
+    pub fn load(path: &Path) -> utils::Result<Self> {
+        match fs::read_to_string(path) {
+            Ok(content) => toml::from_str(&content)
+                .map_err(|e| format!("Corrupted state file at {path:?}: {e}").into()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
+            Err(e) => Err(format!("Failed to read state file at {path:?}: {e}").into()),
+        }
+    }
+
+    pub fn save(&self, path: &Path) -> utils::Result<()> {
+        let content =
+            toml::to_string_pretty(self).map_err(|e| format!("Failed to serialize state: {e}"))?;
+        fs::write(path, content).map_err(|e| format!("Failed to write state: {e}"))?;
+        Ok(())
+    }
+
+    pub fn update(&mut self, name: String, version: String, files: Vec<PathBuf>) {
+        self.components.insert(
+            name,
+            ComponentState {
+                version,
+                files,
+                timestamp: Utc::now(),
+            },
+        );
+    }
+
+    pub fn should_skip(&self, meta: &Metadata) -> bool {
+        match self.components.get(&meta.name) {
+            Some(s) => &s.version == &meta.version,
+            None => false,
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Manifest {
@@ -37,7 +87,7 @@ enum Group {
 #[derive(Debug, Deserialize)]
 pub struct Metadata {
     pub name: String,
-    version: String,
+    pub version: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,6 +105,7 @@ struct BuildSpec {
     #[serde(default)]
     tag: String,
     commands: Vec<String>,
+    items: Vec<PathBuf>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -93,6 +144,7 @@ struct ScriptSpec {
     bin: String,
     #[serde(default)]
     env: Vec<(String, String)>,
+    items: Vec<PathBuf>,
 }
 
 impl Component {
@@ -143,18 +195,25 @@ impl Component {
         self
     }
 
-    pub fn install(&self, ctx: &Context) -> utils::Result<()> {
-        let res = match &self.installer {
+    pub fn install(&self, ctx: &Context, state: &mut InstallState) -> utils::Result<()> {
+        let files = match &self.installer {
             Installer::BuildSource(spec) => build_from_source(ctx, &self.meta, spec),
             Installer::PythonVenv(spec) => install_to_python_venv(ctx, &self.meta, spec),
             Installer::ReleaseAsset(spec) => fetch_and_install_asset(ctx, &self.meta, spec),
             Installer::RunScript(spec) => fetch_and_run_script(ctx, &self.meta, spec),
-        };
-        res.map_err(|e| format!("Component installation failed: {}\n{e}", self.meta.name).into())
+        }
+        .map_err(|e| format!("Component installation failed: {}\n{e}", self.meta.name))?;
+
+        state.update(self.meta.name.clone(), self.meta.version.clone(), files);
+        Ok(())
     }
 }
 
-fn build_from_source(ctx: &Context, meta: &Metadata, spec: &BuildSpec) -> utils::Result<()> {
+fn build_from_source(
+    ctx: &Context,
+    meta: &Metadata,
+    spec: &BuildSpec,
+) -> utils::Result<Vec<PathBuf>> {
     // Clone specific tag of GitHub repository to temp directory
     let clone_dir = ctx.temp_dir.join(&meta.name);
     log!(info, "- Cloning repository to {:?} ...", clone_dir);
@@ -178,10 +237,15 @@ fn build_from_source(ctx: &Context, meta: &Metadata, spec: &BuildSpec) -> utils:
     }
 
     log!(info, "- Building from source completed!");
-    Ok(())
+    let fs_items = spec.items.iter().map(|p| ctx.install_prefix.join(p)).collect();
+    Ok(fs_items)
 }
 
-fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> utils::Result<()> {
+fn install_to_python_venv(
+    ctx: &Context,
+    meta: &Metadata,
+    spec: &VenvSpec,
+) -> utils::Result<Vec<PathBuf>> {
     let venv_name = format!(".{}", meta.name);
     let bin_dir = ctx.install_prefix.join("bin");
     let venv_dir = bin_dir.join(&venv_name);
@@ -220,14 +284,14 @@ fn install_to_python_venv(ctx: &Context, meta: &Metadata, spec: &VenvSpec) -> ut
     utils::create_symlink(&bin_src, &bin_dst)?;
     log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
 
-    Ok(())
+    Ok(vec![venv_dir, bin_dst])
 }
 
 fn fetch_and_install_asset(
     ctx: &Context,
     meta: &Metadata,
     spec: &ReleaseSpec,
-) -> utils::Result<()> {
+) -> utils::Result<Vec<PathBuf>> {
     // Ensure working directory for current component exists
     let work_dir = ctx.temp_dir.join(&meta.name);
     fs::create_dir_all(&work_dir)
@@ -331,6 +395,7 @@ fn fetch_and_install_asset(
             // Install binary
             fs::rename(work_dir.join(&spec.path), &bin_dst)?;
             log!(info, "- Installed binary to {bin_dst:?}");
+            Ok(vec![bin_dst.clone()])
         },
         InstallAssetAs::Folders => {
             // Get the root directory inside asset
@@ -343,6 +408,8 @@ fn fetch_and_install_asset(
             }
             log!(debug, "Package root directory: {root_dir:?}");
 
+            let mut files = Vec::new();
+
             // Check for each standard directory
             for folder_name in &["bin", "lib", "share"] {
                 // Get source and destination directory paths
@@ -353,7 +420,7 @@ fn fetch_and_install_asset(
                 }
 
                 // Iterate over every entry found (file or directory)
-                log!(info, "- Moving items from {root_dir:?} to {:?}", ctx.install_prefix);
+                log!(info, "- Moving items from {src_dir:?} to {dst_dir:?}");
                 for entry in fs::read_dir(&src_dir)? {
                     // Get source and destination entry paths
                     let entry = entry?;
@@ -370,9 +437,11 @@ fn fetch_and_install_asset(
                         log!(debug, "Removed existing item: {dst_entry:?}");
                     }
                     fs::rename(&src_entry, &dst_entry)?;
+                    files.push(dst_entry.clone());
                     log!(info, "  - Moved item: {:?}", entry.file_name());
                 }
             }
+            Ok(files)
         },
         InstallAssetAs::Symlink => {
             // Install asset as package
@@ -388,13 +457,16 @@ fn fetch_and_install_asset(
             let bin_src = pkg_dst.join(&spec.path);
             utils::create_symlink(&bin_src, &bin_dst)?;
             log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
+            Ok(vec![pkg_dst, bin_dst.clone()])
         },
     }
-
-    Ok(())
 }
 
-fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> utils::Result<()> {
+fn fetch_and_run_script(
+    ctx: &Context,
+    meta: &Metadata,
+    spec: &ScriptSpec,
+) -> utils::Result<Vec<PathBuf>> {
     // Determine script file extension from cmd
     let script_path = ctx.temp_dir.join(format!("{}.{}", meta.name, spec.cmd));
     log!(debug, "Download script path: {script_path:?}");
@@ -413,6 +485,8 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
     }
     log!(info, "- Executed script successfully");
 
+    let mut files = spec.items.clone();
+
     // Create symlink to install location, ONLY if specified
     if !spec.bin.is_empty() {
         // Get binary installation directory and destination file path
@@ -428,10 +502,11 @@ fn fetch_and_run_script(ctx: &Context, meta: &Metadata, spec: &ScriptSpec) -> ut
             log!(debug, "Removed existing binary");
         }
         utils::create_symlink(&spec.bin, &bin_dst)?;
+        files.push(bin_dst.clone());
         log!(info, "- Created a symlink: {:?} -> {bin_dst:?}", spec.bin);
     }
 
-    Ok(())
+    Ok(files)
 }
 
 fn fetch_asset_with_progress(

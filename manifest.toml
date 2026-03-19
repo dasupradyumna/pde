@@ -98,6 +98,7 @@ commands = [
     "make -j8 CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX={install_prefix}",
     "make install",
 ]
+items = ["bin/nvim", "lib/nvim", "share/nvim"]
 
 [[list]]
 group = "neovim"

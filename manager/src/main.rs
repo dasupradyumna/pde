@@ -5,7 +5,7 @@ mod component;
 mod utils;
 
 use crate::arguments::{Context, Mode};
-use crate::component::Manifest;
+use crate::component::{InstallState, Manifest};
 use std::fs;
 use std::path::Path;
 use std::process::{self, Command};
@@ -104,6 +104,9 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     fs::create_dir_all(&ctx.temp_dir)?;
     log!(debug, "Ensured temp directory exists");
 
+    // Load installation state
+    let mut state = InstallState::load(&ctx.state_file)?;
+
     // Read install spec file (TOML) into vector of components
     let manifest: Manifest = {
         let content = fs::read_to_string(ctx.pde_dir.join("manifest.toml"))
@@ -112,9 +115,14 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     };
     for mut component in manifest.list {
         log!(info, "\n{}\nInstalling component: {} ...", "-".repeat(100), component.meta.name);
+        if state.should_skip(&component.meta) {
+            log!(info, "- Component requirement already satisfied. Skipping");
+            continue;
+        }
+
         log!(debug, "{component:#?}");
-        // TODO: if component / group is disabled or already installed, then skip
-        component.resolve_placeholders(&ctx).install(&ctx)?;
+        component.resolve_placeholders(&ctx).install(&ctx, &mut state)?;
+        state.save(&ctx.state_file)?;
     }
 
     self::manage_configs(ctx)?;

@@ -2,3 +2,4 @@ free.version
 .aider*
 target/
 pde-manager
+state.toml
