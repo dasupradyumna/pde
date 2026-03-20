@@ -81,13 +81,18 @@ nnoremap gd K
 nnoremap U <C-R>
 
 " Cursor movement in insert mode
-" - <C-G>U prevents undo block creation on line breaks
-inoremap <Left> <C-G>U<Left>
-inoremap <Right> <C-G>U<Right>
 imap <C-H> <Left>
 imap <C-J> <Down>
 imap <C-K> <Up>
 imap <C-L> <Right>
+" - Preserve digraph support
+inoremap <C-D> <C-K>
+" - <C-G>U prevents undo block creation on line breaks
+inoremap <Left> <C-G>U<Left>
+inoremap <Right> <C-G>U<Right>
+" - Ensure <Up> and <Down> works in command-line too
+cmap <C-J> <Down>
+cmap <C-K> <Up>
 
 " System clipboard helpers
 nnoremap <Leader>cc "+y

@@ -1,9 +1,9 @@
 "-------------------------------------- GENERAL AUTO-COMMANDS -------------------------------------"
 
 " Trim all trailing whitespace characters in the active file
-const s:trim_exclude = ['gitcommit', 'markdown']
+const s:trim_exclude_ft = ['gitcommit', 'markdown']
 function! s:trim_trailing_whitespace()
-    if s:trim_exclude->index(&l:filetype) >= 0 | return | endif
+    if s:trim_exclude_ft->index(&l:filetype) >= 0 | return | endif
 
     let view = winsaveview()
     %substitute:\s\+$::e
@@ -19,8 +19,11 @@ function! s:toggle_cursorline(enable)
 endfunction
 
 " Enable treesitter in buffer if filetype is supported
-function! s:enable_treesitter(filetype)
-    if !v:lua.vim.treesitter.language.add(a:filetype) | return | endif
+const s:allowed_treesitter_ft = ['sh', 'jsonc']
+function! s:enable_treesitter(ft)
+    if !v:lua.vim.treesitter.language.add(a:ft) && s:allowed_treesitter_ft->index(a:ft) < 0
+        return
+    endif
 
     lua vim.treesitter.start()
     setlocal foldmethod=expr
@@ -29,6 +32,9 @@ endfunction
 
 augroup __self__general__
     autocmd!
+
+    " Auto-read external updates into a buffer
+    autocmd WinEnter * checktime %
 
     " Trim trailing whitespace just before saving
     autocmd BufWritePre * call s:trim_trailing_whitespace()

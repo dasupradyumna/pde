@@ -45,11 +45,12 @@ function! s:float_load_buf(tool) abort
         call nvim_win_set_buf(0, s:active[a:tool].buf)
     else
         " Configure floating window to cover entire screen
-        const config = #{ relative: 'editor', width: &columns, height: &lines - 1, row: 0, col: 0 }
+        const config = #{ relative: 'editor', style: 'minimal',
+                            \ width: &columns, height: &lines, row: 0, col: 0 }
         let s:win_id = nvim_open_win(s:active[a:tool].buf, v:true, config)
 
-        " Prevent horizontal scrolling
-        setlocal sidescrolloff=0
+        " Prevent horizontal scrolling and disable statuscolumn
+        setlocal sidescrolloff=0 statuscolumn=
         " Autocommand to clear cached floating window ID
         execute 'autocmd WinClosed' s:win_id '++once let s:win_id = 0'
     endif

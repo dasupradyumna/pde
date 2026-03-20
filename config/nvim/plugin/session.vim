@@ -1,5 +1,9 @@
 "----------------------------------------- SESSION MANAGER ----------------------------------------"
 
+" Session options configuring contents to save
+" TODO: save shada, and remove globals. use shada global in tabpage
+set sessionoptions=buffers,folds,globals,help,tabpages,winsize
+
 " Standard directory to store sessions
 const s:sessions_dir = stdpath('state') .. '/sessions'
 call mkdir(s:sessions_dir, 'p')
