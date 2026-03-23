@@ -84,6 +84,15 @@ local nvim_dap = {
             dap.providers.configs['local'] = function () return dofile(cwd_dap_config) end
         end
 
+        -- Setup debugger and breakpoint signs
+        vim.fn.sign_define {
+            { name = 'DapBreakpoint', text = '⬤', texthl = 'DapBreakpoint' },
+            { name = 'DapBreakpointCondition', text = '◆', texthl = 'DapBreakpoint' },
+            { name = 'DapLogPoint', text = '▲', texthl = 'DapBreakpoint' },
+            { name = 'DapBreakpointRejected', text = '✖', texthl = 'DapBreakpoint' },
+            { name = 'DapStopped', text = '', linehl = 'DapCurrentLine' },
+        }
+
         -- Set up global keymaps which can be called outside debug session
         local function input(prompt)
             local ret
@@ -119,6 +128,7 @@ local nvim_dap = {
         -- Set up keymaps local to the active debug session
         local is_debug_active = false
         dap.listeners.after.event_initialized.debug_map_keys = function ()
+            vim.cmd [[highlight! link StatusLine Keyword]]
             is_debug_active = true
             nnoremap('<Leader>dC', dap.run_to_cursor)
             nnoremap('<Leader>dp', dap.pause)
@@ -133,6 +143,7 @@ local nvim_dap = {
 
         -- Remove keymaps local to the active debug session
         local function debug_unmap_keys()
+            vim.cmd [[highlight! link StatusLine Comment]]
             if is_debug_active then
                 nunmap '<Leader>dp'
                 nunmap '<Leader>dn'

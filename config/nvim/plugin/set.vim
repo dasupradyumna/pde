@@ -52,7 +52,7 @@ set matchpairs+=<:>
 set mousescroll=ver:10,hor:6
 set report=0
 set scrolloff=4
-set shada=!,'100,/100,<10,@10,h,s10
+set shada='100,/100,<10,@10,h,s10
 set smartindent
 set splitbelow splitright
 set startofline
@@ -64,12 +64,12 @@ set nowildmenu
 
 "-------------------------------- DISPLAY --------------------------------"
 
-set cmdheight=0
+" set cmdheight=0
 set cmdwinheight=10
 set colorcolumn=+1
 set cursorlineopt=line
 set debug=msg
-set fillchars=diff:╳,eob:\ ,fold:\ ,foldclose:,foldopen:,foldsep:\ ,lastline:~,msgsep:━,stl:─
+set fillchars=diff:╳,eob:\ ,fold:\ ,foldclose:,foldopen:,foldsep:\ ,lastline:~,msgsep:─,stl:─
 " XXX: this is not working as expected... WezTerm config / issue?
 set guicursor=n-v:block,i-c-ci:ver50,r-cr-o:hor50,t:block-blinkon500-blinkoff500-TermCursor
 set laststatus=3
@@ -80,11 +80,10 @@ set shortmess=aoOsIcCF
 set showcmdloc=tabline
 set noshowmode
 set signcolumn=auto:1
-set statuscolumn=%=%s%l\ %{FoldColumn()}
-set statusline=─
-set tabline=%!TabLine()
+set statuscolumn=%{%ui#statuscolumn()%}
+set statusline=%!ui#statusline()
 set showtabline=2
-set winbar=\ %f
+set tabline=%!ui#tabline()
 
 "-------------------- FOLDING -------------------"
 
@@ -93,34 +92,3 @@ set foldexpr=v:lua.vim.treesitter.foldexpr()
 set foldlevelstart=10
 set foldopen+=insert,jump
 set foldtext=
-
-"--------------------------------------- TEMPORARY FUNCTIONS --------------------------------------"
-
-" custom tabline
-function TabLine()
-    let s = ''
-    let c = 0
-    for i in nvim_list_tabpages()
-        " tab highlight
-        let s ..= i == nvim_get_current_tabpage() ? '%#TabLineSel#' : '%#TabLine#'
-        try | let name = nvim_tabpage_get_var(i, 'tabpage_name')
-        catch | let name = '[no name]' | endtry
-        let s ..= ' ' .. name .. ' '
-        let c += len(name) + 2
-    endfor
-    " empty fill highlight
-    let s ..= '%#TabLineFill#'
-    let s ..= '%=%S '
-    return repeat(' ', (&columns - c) / 2) .. s
-endfunction
-
-" foldcolumn without levels
-function FoldColumn()
-    if foldclosed(v:lnum) == v:lnum
-        return ' '
-    elseif foldlevel(v:lnum) > foldlevel(v:lnum - 1)
-        return ' '
-    else
-        return '  '
-    endif
-endfunction
