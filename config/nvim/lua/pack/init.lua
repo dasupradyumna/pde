@@ -36,9 +36,11 @@ return {
                 end
                 local gs = require 'gitsigns'
                 nnoremap('<Leader>gl', gs.toggle_current_line_blame)
-                nnoremap('<Leader>gp', gs.preview_hunk_inline)
+                nnoremap('<Leader>gh', gs.preview_hunk_inline)
                 nnoremap('<Leader>gn', gs.nav_hunk, 'next')
-                nnoremap('<Leader>gN', gs.nav_hunk, 'prev')
+                nnoremap('<Leader>gp', gs.nav_hunk, 'prev')
+                nnoremap('<Leader>gN', gs.nav_hunk, 'next', { target = 'staged' })
+                nnoremap('<Leader>gP', gs.nav_hunk, 'prev', { target = 'staged' })
                 nnoremap('<Leader>gs', gs.stage_hunk)
                 nnoremap('<Leader>gr', gs.reset_hunk)
                 -- Hunk text object for operator and visual modes

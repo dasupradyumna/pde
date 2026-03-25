@@ -113,9 +113,9 @@ return {
             default = { 'lsp', 'path', 'snippets', 'buffer' },
             min_keyword_length = 2,
             providers = {
-                lsp = { score_offset = 5 },
+                lsp = { score_offset = 10, fallbacks = {} },
                 path = { opts = { show_hidden_files_by_default = true } },
-                snippets = { score_offset = 10 },
+                snippets = { score_offset = 20 },
             },
         },
         cmdline = {
