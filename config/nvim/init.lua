@@ -13,8 +13,9 @@ vim.filetype.add {
     extension = { launch = 'xml' },
 }
 
--- Temporary colorscheme
-vim.cmd.colorscheme 'retrobox'
+-- Load custom colorscheme
+vim.g.eventide_transparent = true
+vim.cmd.colorscheme 'eventide'
 
 ------------------ REMOVE IN V0.12 : LAZY.NVIM BOOTSTRAP ------------------
 local data_path = vim.fn.stdpath 'data'
