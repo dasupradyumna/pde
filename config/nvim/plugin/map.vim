@@ -41,15 +41,38 @@ nnoremap <Leader>bW <Cmd>%bwipeout<CR>
 nnoremap <Leader>bs <Cmd>write<CR>
 nnoremap <Leader>bS <Cmd>wall<CR>
 
+" Rename file in buffer
+function! s:rename_buffer()
+    let src = expand('%:p')
+    let dst = input('Rename src: ', src)
+    " Skip if target is empty or same as current file
+    if dst->empty() || src == dst | return | endif
+    " Handle error when rename fails
+    if rename(src, dst) | call notify#error('Rename failed: %s -> %s', src, dst) | endif
+    " Replace file and buffer in current window
+    silent exe 'write' src '| edit' dst '| bwipeout!' src
+    " Delete older file (rename does not, for some reason)
+    if delete(src) | call notify#error('Delete failed: %s', src) | endif
+endfunction
+nnoremap <Leader>br <Cmd>call <SID>rename_buffer()<CR>
+
 "--------------------------------- NAVIGATION ---------------------------------"
 
 " Swap start-of-line and first-character
-noremap 0 ^
-noremap ^ 0
+nnoremap 0 ^
+nnoremap ^ 0
+xnoremap 0 ^
+xnoremap 0 ^
+onoremap ^ 0
+onoremap ^ 0
 
 " Swap end-of-line and last-character
-noremap $ g_
-noremap g_ $
+nnoremap $ g_
+nnoremap g_ $
+xnoremap $ g_
+xnoremap g_ $
+onoremap $ g_
+onoremap g_ $
 
 " Horizontal scrolling
 nnoremap H 5zh
@@ -85,24 +108,26 @@ imap <C-H> <Left>
 imap <C-J> <Down>
 imap <C-K> <Up>
 imap <C-L> <Right>
-" - Preserve digraph support
-inoremap <C-D> <C-K>
+" - Preserve digraph symbol support
+inoremap <C-S> <C-K>
 " - <C-G>U prevents undo block creation on line breaks
 inoremap <Left> <C-G>U<Left>
 inoremap <Right> <C-G>U<Right>
 " - Ensure <Up> and <Down> works in command-line too
+cmap <C-H> <Left>
 cmap <C-J> <Down>
 cmap <C-K> <Up>
+cmap <C-L> <Right>
 
 " System clipboard helpers
 nnoremap <Leader>cc "+y
 nnoremap <Leader>cx "+d
-nnoremap <Leader>cp "+p
-nnoremap <Leader>cP "+P
+" nnoremap <Leader>cp "+p
+" nnoremap <Leader>cP "+P
 xnoremap <Leader>cc "+y
 xnoremap <Leader>cx "+d
-xnoremap <Leader>cp "+p
-xnoremap <Leader>cP "+P
+" xnoremap <Leader>cp "+p
+" xnoremap <Leader>cP "+P
 
 "----------------------------------- TABPAGE ----------------------------------"
 

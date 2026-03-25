@@ -8,11 +8,6 @@ set sessionoptions=buffers,folds,globals,help,tabpages,winsize
 const s:sessions_dir = stdpath('state') .. '/sessions'
 call mkdir(s:sessions_dir, 'p')
 
-" Helper to use notification manager from lua
-function! s:notify(type, msg)
-    call luaeval(printf("require('self.notify').%s(_A)", a:type), a:msg)
-endfunction
-
 " Check if current session only has empty buffers
 function! s:is_current_session_empty()
     return nvim_list_bufs()
@@ -40,24 +35,23 @@ function! s:session_manager.save()
 
     lua require('self.tabpage').save_to_global()
     execute 'mksession!' fnameescape(self.file)
-    call s:notify('info', printf('Session saved (%s)', getcwd(-1, -1)))
+    call notify#info('Session saved (%s)', getcwd(-1, -1))
 endfunction
 
 " Load session for CWD
 function! s:session_manager.load()
     call self.set_file()
     if self.disabled | return | endif
-    if !filereadable(self.file) | call s:notify('warn', 'No session found') | return | endif
+    if !filereadable(self.file) | call notify#warn('No session found') | return | endif
 
     silent %bwipeout!
     try
         execute 'silent source' fnameescape(self.file)
         lua require('self.tabpage').load_from_global()
-        call s:notify('info', printf('Session loaded (%s)', getcwd(-1, -1)))
+        call notify#info('Session loaded (%s)', getcwd(-1, -1))
     catch
         let self.disabled = v:true
-        call s:notify('error', printf('Failed to load session! (%s)\n\n%s',
-                    \                   getcwd(-1, -1), v:exception))
+        call notify#error('Failed to load session! (%s)\n\n%s', getcwd(-1, -1), v:exception)
     endtry
 endfunction
 
@@ -72,7 +66,7 @@ command! SessionSave call s:session_manager.save()
 command! SessionLoad call s:session_manager.load()
 command! SessionDelete call s:session_manager.delete()
 command! SessionEnable let s:session_manager.disabled = v:false
-command! SessionDisable let s:session_manager.disabled = v:true
+command! -bar SessionDisable let s:session_manager.disabled = v:true
 
 " Setup autocommands
 augroup __session_manager__
@@ -80,9 +74,7 @@ augroup __session_manager__
 
     " Load session on startup (only if no files were specified)
     autocmd VimEnter * ++nested
-                \ if argc() > 0 && getcwd() ==# $HOME |
-                \     let s:session_manager.disabled = v:true |
-                \ endif |
+                \ if argc() > 0 && getcwd() ==# $HOME | SessionDisable | endif |
                 \ SessionLoad
 
     " Save session on exit
