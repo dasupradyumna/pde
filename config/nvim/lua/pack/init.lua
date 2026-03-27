@@ -2,6 +2,16 @@
 
 return {
     {
+        'dasupradyumna/aurorux.nvim',
+        lazy = false,
+        priority = 1000,
+        opts = {},
+        config = function (_, opts)
+            vim.g.aurorux_transparent = true
+            vim.api.nvim_command 'colorscheme aurorux'
+        end,
+    },
+    {
         'nvim-treesitter/nvim-treesitter',
         lazy = false,
         build = ':TSUpdate',

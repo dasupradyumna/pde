@@ -13,10 +13,6 @@ vim.filetype.add {
     extension = { launch = 'xml' },
 }
 
--- Load custom colorscheme
-vim.g.eventide_transparent = true
-vim.cmd.colorscheme 'eventide'
-
 ------------------ REMOVE IN V0.12 : LAZY.NVIM BOOTSTRAP ------------------
 local data_path = vim.fn.stdpath 'data'
 local lazypath = data_path .. '/lazy/lazy.nvim'
@@ -39,7 +35,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 require('lazy').setup('pack', {
     defaults = { cond = not vim.g.user.neovim_git_mode },
-    dev = { path = '~/neovim_plugins', patterns = { 'dasupradyumna' }, fallback = true },
+    dev = { path = '~/projects/plugins', patterns = { 'dasupradyumna' }, fallback = true },
     install = { colorscheme = { 'retrobox' } },
     ui = { size = { width = 0.999, height = 0.95 }, border = 'rounded' },
 })
