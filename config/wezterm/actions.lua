@@ -19,9 +19,13 @@ M.ChangeTabTitle = action.PromptInputLine {
 
 DOMAINS = {
   -- Use the unix domain socket by default; configure for tmux-like behavior
-  unix = { { name = 'mux:local' } },
+  unix = {
+        -- { name = 'mux:local' }
+    },
   -- SSH domains built from ~/.ssh/config
-  ssh = { ['blr-dev-sn4'] = true },
+  ssh = {
+        -- ['blr-dev-sn4'] = true
+    },
 }
 
 -- CHECK: New Attach requests sometimes replace existing session
