@@ -1,5 +1,43 @@
 # CHANGE LOG
 
+## 2026.1
+
+_Installer rust-rewrite, custom theming, and UI improvements._
+
+### Added
+
+- **Setup**
+  - Rewrite logic into a rust binary crate `manager`
+    - Self-upgrade support and fresh PDE cloning
+    - TOML manifest loading with `Component`, `Installer`, and `Group` types
+    - Tool config installation; bash environment variables extracted to a separate sourced file
+    - Interrupt handling via `ctrlc` crate and structured logging via `log!()` macro
+    - Skip component when requirement is already satisfied via local installation state tracking
+    - Human-readable elapsed time display
+  - Docker installation script
+- **Neovim**
+  - `aurorux` colorscheme and  `gitsigns.nvim` for buffer-level git status
+  - Statuscolumn, tabline, and winbar configuration
+  - `nvim-dap` plugin for debugging using debug adapter protocol
+  - Filetype plugin files for `help`, `markdown`, `rust`, and `vim`
+  - Keymap to rename current buffer file
+  - Vimscript autoload wrapper for Lua notify module
+- **WezTerm**
+  - Support for transparent background along with images
+  - All windows open in a maximized state
+- **GDB**: Configure a colored pretty prompt
+
+### Changed
+
+- **Neovim**
+  - Session manager refactored to use Vimscript autoload wrapper for notify module
+  - Command-mode and mode-cancel keymaps updated; cursorline disabled in quickfix windows
+
+### Fixed
+
+- **Neovim**: Correct library paths for Lua LS
+- **AI**: Restored Anthropic authentication in OpenCode via plugin workaround
+
 ## 2026.0
 
 _Support for LSP and treesitter in neovim, along with CLI tool launcher._

@@ -57,7 +57,7 @@ config.background = {
         -- source = { File = wezterm.config_dir .. '/colors/dusk-moon.jpg' },
         -- hsb = { saturation = 0.5, brightness = 0.3 },
         source = { File = wezterm.config_dir .. '/colors/aurora-horizon.jpg' },
-        hsb = { saturation = 0.8, brightness = 0.1 },
+        hsb = { brightness = 0.1 },
         vertical_align = 'Bottom',
     },
 }

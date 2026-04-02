@@ -33,7 +33,7 @@ return {
             current_line_blame = true,
             current_line_blame_opts = { delay = 250 },
             current_line_blame_formatter = '   <author> (<author_time>) :: <summary>',
-            current_line_blame_formatter_nc = '~ not committed ~',
+            current_line_blame_formatter_nc = ' ~ not committed ~',
             numhl = true,
             preview_config = { col = 25, border = 'rounded' },
             signcolumn = false,
