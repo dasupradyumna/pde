@@ -48,6 +48,7 @@ set formatoptions+=ro/n1
 set gdefault  " TODO: check if this breaks any plugins?
 set history=1000
 set ignorecase smartcase
+set jumpoptions+=view
 set matchpairs+=<:>
 set mousescroll=ver:10,hor:6
 set report=0
@@ -69,7 +70,7 @@ set cmdwinheight=10
 set colorcolumn=+1
 set cursorlineopt=line
 set debug=msg
-set fillchars=diff:╳,eob:\ ,fold:\ ,foldclose:,foldopen:,foldsep:\ ,lastline:~,msgsep:─,stl:─
+set fillchars=diff:\ ,eob:\ ,fold:─,foldclose:,foldopen:,foldsep:\ ,lastline:~,msgsep:─,stl:─
 " XXX: this is not working as expected... WezTerm config / issue?
 set guicursor=n-v:block,i-c-ci:ver50,r-cr-o:hor50,t:block-blinkon500-blinkoff500-TermCursor
 set laststatus=3

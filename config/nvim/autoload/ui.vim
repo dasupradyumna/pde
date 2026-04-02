@@ -10,18 +10,18 @@ function! ui#statuscolumn()
         let fold = ' '
     endif
 
-    return ' %=%s%=%l ' .. fold
+    return ' %=%s%=%l %#FoldColumn#' .. fold
 endfunction
 
 " Statusline option format string
 function! ui#statusline()
-    return '─'
+    return '%= %l/%L,%02c '
 endfunction
 
 " Tabline option format string
 " > [tab-names] | show-cmd
 function ui#tabline()
-    let tabline = ''
+    let tabline = '%10(%)%='
     let n_chars = 0
     for tab in nvim_list_tabpages()
         " Tab name highlight
@@ -35,9 +35,7 @@ function ui#tabline()
     " Reset the tabline highlight after names
     let tabline ..= '%#TabLineFill#'
     " Display the `showcmd` string
-    let tabline ..= '%=%S '
-    " Center the tab names list
-    let tabline = repeat(' ', (&columns - n_chars) / 2) .. tabline
+    let tabline ..= '%=%10(%S%) '
     return tabline
 endfunction
 
