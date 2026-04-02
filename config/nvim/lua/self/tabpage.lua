@@ -2,25 +2,25 @@
 
 local tabpage = {}
 
---- Get the name of a tabpage
---- @param tabid integer Tabpage ID
---- @return string # Tabpage name
+---Get the name of a tabpage
+---@param tabid integer Tabpage ID
+---@return string # Tabpage name
 function tabpage.get_name(tabid) return vim.api.nvim_tabpage_get_var(tabid, 'tabpage_name') end
 
---- Check if a tabpage has a name
---- @param tabid integer Tabpage ID
---- @return boolean # True if the tabpage has a name
+---Check if a tabpage has a name
+---@param tabid integer Tabpage ID
+---@return boolean # True if the tabpage has a name
 function tabpage.has_name(tabid) return pcall(tabpage.get_name, tabid) end
 
---- Set the name of a tabpage
---- @param tabid integer Tabpage ID
---- @param name string New tabpage name
+---Set the name of a tabpage
+---@param tabid integer Tabpage ID
+---@param name string New tabpage name
 function tabpage.set_name(tabid, name) vim.api.nvim_tabpage_set_var(tabid, 'tabpage_name', name) end
 
 --- Prompt the user to set the name of a tabpage
---- @param tabid integer Tabpage ID
---- @param curr_name string? Current tabpage name
---- @return boolean # True if the name was successfully set
+---@param tabid integer Tabpage ID
+---@param curr_name string? Current tabpage name
+---@return boolean # True if the name was successfully set
 local function prompt_and_set_name(tabid, curr_name)
     -- Create a list of existing tabpage names
     local existing_names = vim.iter(vim.api.nvim_list_tabpages()):fold({}, function (dict, t)
@@ -74,12 +74,12 @@ local function prompt_and_set_name(tabid, curr_name)
     return msg == 'pass'
 end
 
---- Update the internal tabpage name list
+---Update the internal tabpage name list
 function tabpage.update_name_list()
     tabpage.names = vim.iter(vim.api.nvim_list_tabpages()):map(tabpage.get_name):totable()
 end
 
---- Create a new tabpage with a user-chosen name
+---Create a new tabpage with a user-chosen name
 function tabpage.create()
     vim.cmd 'tabnew'
     local ret = prompt_and_set_name(vim.api.nvim_get_current_tabpage())
@@ -87,7 +87,7 @@ function tabpage.create()
     tabpage.update_name_list()
 end
 
---- Rename the current tabpage
+---Rename the current tabpage
 function tabpage.rename()
     local tabid = vim.api.nvim_get_current_tabpage()
     local ok, name = pcall(tabpage.get_name, tabid)
@@ -96,8 +96,8 @@ function tabpage.rename()
     tabpage.update_name_list()
 end
 
---- Move the current tabpage left or right
---- @param dir '+' | '-' Move direction
+---Move the current tabpage left or right
+---@param dir '+' | '-' Move direction
 function tabpage.move(dir)
     local curr = vim.fn.tabpagenr()
     local last = vim.fn.tabpagenr '$'
@@ -108,10 +108,10 @@ function tabpage.move(dir)
     tabpage.update_name_list()
 end
 
---- Save tabpage names to a global variable
+---Save tabpage names to a global variable
 function tabpage.save_to_global() vim.g.TabpageNames = vim.json.encode(tabpage.names) end
 
---- Load tabpage names from a global variable
+---Load tabpage names from a global variable
 function tabpage.load_from_global()
     local ok, names_to_load = pcall(vim.json.decode, vim.g.TabpageNames)
     if not ok then

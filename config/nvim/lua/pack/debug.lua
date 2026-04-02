@@ -93,7 +93,7 @@ local nvim_dap = {
             { name = 'DapStopped', text = '', linehl = 'DapCurrentLine' },
         }
 
-        -- Set up global keymaps which can be called outside debug session
+        ---Set up global keymaps which can be called outside debug session
         local function input(prompt)
             local ret
             vim.ui.input({ prompt = prompt }, function (inp)
@@ -141,7 +141,7 @@ local nvim_dap = {
             nnoremap('<Leader>dsd', dap.down)
         end
 
-        -- Remove keymaps local to the active debug session
+        ---Remove keymaps local to the active debug session
         local function debug_unmap_keys()
             vim.cmd [[highlight! link StatusLine Comment]]
             if is_debug_active then

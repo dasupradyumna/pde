@@ -11,7 +11,7 @@ function! s:trim_trailing_whitespace() abort
 endfunction
 
 " Toggle cursorline locally based on argument
-const s:cursorline_exclude = []
+const s:cursorline_exclude = ['qf']
 function! s:toggle_cursorline(enable) abort
     if s:cursorline_exclude->index(&l:filetype) >= 0 | return | endif
 

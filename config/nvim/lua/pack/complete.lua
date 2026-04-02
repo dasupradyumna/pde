@@ -1,7 +1,7 @@
 ------------------------------------- BLINK.CMP AUTOCOMPLETION -------------------------------------
 
---- Show completion window if the character preceding the cursor is a keyword
---- @return boolean
+---Show completion window if the character preceding the cursor is a keyword
+---@return boolean
 local function show_if_preceding_is_keyword(cmp)
     local col = vim.api.nvim_win_get_cursor(0)[2]
     if (col == 0 or vim.api.nvim_get_current_line():sub(col, col):match '%s') then
@@ -113,7 +113,7 @@ return {
             default = { 'lsp', 'path', 'snippets', 'buffer' },
             min_keyword_length = 2,
             providers = {
-                lsp = { score_offset = 10, fallbacks = {} },
+                lsp = { score_offset = 10 },
                 path = { opts = { show_hidden_files_by_default = true } },
                 snippets = { score_offset = 20 },
             },

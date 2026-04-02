@@ -8,7 +8,7 @@ map <BS> <NOP>
 noremap ; :
 noremap : ;
 
-" Swap marks (line and character) only in normal, visual, and operator modes
+" Swap marks - line and character (only norm, vis, op modes)
 nnoremap ' `
 nnoremap ` '
 xnoremap ' `
@@ -17,9 +17,13 @@ onoremap ' `
 onoremap ` '
 
 " Replace <Esc> with <C-;> - more uniform across modes
-noremap <C-;> <Esc>
-noremap! <C-;> <Esc>
-tnoremap <C-;> <C-\><C-n>
+" Not using <Esc> - (1) not reliable in select mode, (2) does not cancel commands in command mode
+" Not using <C-\><C-N> - does not work with <count>-insert
+noremap <C-;> <C-\><C-N>
+snoremap <C-;> <C-C>
+cnoremap <C-;> <C-\><C-N>
+inoremap <C-;> <Esc>
+tnoremap <C-;> <C-\><C-N>
 map <Esc> <NOP>
 map! <Esc> <NOP>
 
@@ -58,7 +62,7 @@ nnoremap <Leader>br <Cmd>call <SID>rename_buffer()<CR>
 
 "--------------------------------- NAVIGATION ---------------------------------"
 
-" Swap start-of-line and first-character
+" Swap start-of-line and first-character (only norm, vis, op modes)
 nnoremap 0 ^
 nnoremap ^ 0
 xnoremap 0 ^
@@ -66,7 +70,7 @@ xnoremap 0 ^
 onoremap ^ 0
 onoremap ^ 0
 
-" Swap end-of-line and last-character
+" Swap end-of-line and last-character (only norm, vis, op modes)
 nnoremap $ g_
 nnoremap g_ $
 xnoremap $ g_
@@ -114,10 +118,10 @@ inoremap <C-S> <C-K>
 inoremap <Left> <C-G>U<Left>
 inoremap <Right> <C-G>U<Right>
 " - Ensure <Up> and <Down> works in command-line too
-cmap <C-H> <Left>
-cmap <C-J> <Down>
-cmap <C-K> <Up>
-cmap <C-L> <Right>
+cnoremap <C-H> <Left>
+cnoremap <C-J> <Down>
+cnoremap <C-K> <Up>
+cnoremap <C-L> <Right>
 
 " System clipboard helpers
 nnoremap <Leader>cc "+y
