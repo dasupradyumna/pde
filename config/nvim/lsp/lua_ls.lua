@@ -67,8 +67,10 @@ return {
             workspace = {
                 checkThirdParty = 'Disable',
                 -- Refer: https://github.com/neovim/nvim-lspconfig/issues/3189
-                -- TODO: This may need to be updated when working on a plugin
                 library = vim.tbl_filter(function (path)
+                        if vim.env.PWD:find(vim.env.HOME .. '/projects/plugins', 1, true) then
+                            return true  -- Allow config paths when in neovim plugins folder
+                        end
                         local config_path = vim.fn.stdpath('config')
                         return path ~= config_path and path ~= (config_path .. '/after')
                     end,

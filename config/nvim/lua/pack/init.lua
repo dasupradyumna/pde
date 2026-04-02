@@ -5,9 +5,8 @@ return {
         'dasupradyumna/aurorux.nvim',
         lazy = false,
         priority = 1000,
-        opts = {},
-        config = function (_, opts)
-            vim.g.aurorux_transparent = true
+        config = function ()
+            require('aurorux').setup { transparent = true }
             vim.api.nvim_command 'colorscheme aurorux'
         end,
     },
@@ -32,10 +31,11 @@ return {
         opts = {
             attach_to_untracked = true,
             current_line_blame = true,
-            current_line_blame_opts = { delay = 250, virt_text_pos = 'right_align' },
-            current_line_blame_formatter = '<author> (<author_time>) :: <summary>',
-            current_line_blame_formatter_nc = '[ not committed ]',
+            current_line_blame_opts = { delay = 250 },
+            current_line_blame_formatter = '   <author> (<author_time>) :: <summary>',
+            current_line_blame_formatter_nc = '~ not committed ~',
             numhl = true,
+            preview_config = { col = 25, border = 'rounded' },
             signcolumn = false,
 
             on_attach = function (bufnr)
@@ -45,12 +45,14 @@ return {
                     vim.keymap.set('n', k, cb_, { buffer = bufnr })
                 end
                 local gs = require 'gitsigns'
-                nnoremap('<Leader>gl', gs.toggle_current_line_blame)
-                nnoremap('<Leader>gh', gs.preview_hunk_inline)
-                nnoremap('<Leader>gn', gs.nav_hunk, 'next')
-                nnoremap('<Leader>gp', gs.nav_hunk, 'prev')
-                nnoremap('<Leader>gN', gs.nav_hunk, 'next', { target = 'staged' })
-                nnoremap('<Leader>gP', gs.nav_hunk, 'prev', { target = 'staged' })
+                nnoremap('<Leader>gb', gs.blame)
+                nnoremap('<Leader>gd', gs.diffthis)
+                nnoremap('<Leader>gh', gs.preview_hunk)
+                nnoremap('<Leader>gH', gs.preview_hunk_inline)
+                nnoremap('<Leader>gn', gs.nav_hunk, 'next', { greedy = false })
+                nnoremap('<Leader>gN', gs.nav_hunk, 'prev', { greedy = false })
+                nnoremap('<Leader>gSn', gs.nav_hunk, 'next', { greedy = false, target = 'staged' })
+                nnoremap('<Leader>gSN', gs.nav_hunk, 'prev', { greedy = false, target = 'staged' })
                 nnoremap('<Leader>gs', gs.stage_hunk)
                 nnoremap('<Leader>gr', gs.reset_hunk)
                 -- Hunk text object for operator and visual modes
