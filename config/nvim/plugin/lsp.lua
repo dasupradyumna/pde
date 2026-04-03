@@ -32,9 +32,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
         nnoremap('gD', function ()
             vim.diagnostic.enable(not vim.diagnostic.is_enabled { bufnr = 0 }, { bufnr = 0 })
         end)
-        nnoremap('go', vim.diagnostic.open_float)
-        nnoremap('gn', vim.diagnostic.jump, { count = 1, float = false })
-        nnoremap('gN', vim.diagnostic.jump, { count = -1, float = false })
 
         -- Enable automatic formatting using LSP formatter
         vim.api.nvim_clear_autocmds { event = 'BufWritePre', group = group, buffer = buffer }
@@ -59,35 +56,3 @@ vim.api.nvim_create_autocmd('LspAttach', {
 for server in vim.fs.dir(vim.fs.joinpath(vim.fn.stdpath 'config', 'lsp')) do
     vim.lsp.enable(server:sub(0, -5))
 end
-
----------------------------- DIAGNOSTICS CONFIG ---------------------------
-
-local pretty_source = {
-    ['Lua Diagnostics.'] = 'lua_ls',
-    ['Lua Syntax Check.'] = 'lua_ls',
-}
-
-vim.diagnostic.config {
-    virtual_text = {
-        virt_text_pos = 'eol',
-        prefix = '',
-    },
-    signs = false,
-    float = {
-        focusable = false,
-        border = 'rounded',
-        header = '',
-        source = false,
-        format = function (diag)
-            return ('%s: %s [%s]'):format(
-                pretty_source[diag.source] or diag.source,
-                diag.message,
-                diag.code
-            )
-        end,
-        prefix = ' ',
-        suffix = ' ',
-    },
-    update_in_insert = true,
-    severity_sort = true,
-}

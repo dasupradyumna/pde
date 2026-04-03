@@ -62,6 +62,7 @@ set updatetime=500
 set tabclose=uselast
 let &verbosefile = stdpath('data') .. '/verbose.txt'
 set nowildmenu
+set nowrap
 
 "-------------------------------- DISPLAY --------------------------------"
 
