@@ -20,11 +20,10 @@ local config = wezterm.config_builder()
 
 -- Ensure wezterm windows are launched in a maximized state
 wezterm.on('window-focus-changed', function (window)
-    local overrides = window:get_config_overrides() or {}
-    if not overrides.is_maximized then
+    local id = tostring(window:window_id())
+    if not wezterm.GLOBAL[id] then
         window:maximize()
-        overrides.is_maximized = true
-        window:set_config_overrides(overrides)
+        wezterm.GLOBAL[id] = true
     end
 end)
 
@@ -48,6 +47,14 @@ config.exit_behavior_messaging = 'Terse'
 -- Quick select mode
 config.quick_select_alphabet = 'asdfghjklqwertyiuopzxcvmbn'
 -- config.quick_select_patterns = {} -- TODO:
+
+-- Visual bell animation
+config.visual_bell = {
+    fade_in_function = 'Constant',
+    fade_in_duration_ms = 100,
+    fade_out_function = 'Constant',
+    fade_out_duration_ms = 100,
+}
 
 ---------------------------------- APPEARANCE ----------------------------------
 
@@ -78,7 +85,13 @@ config.underline_position = '-0.2cell'
 -- Colors
 config.bold_brightens_ansi_colors = 'No'
 config.color_scheme_dirs = { 'colors' }
-config.color_scheme = 'Midnight'
+config.color_scheme = 'aurorux'
+config.colors = {
+    tab_bar = {
+        background = 'rgba(0,0,0,0)',
+        inactive_tab = { fg_color = '#b3b9b0', bg_color = 'rgba(0,0,0,0)' },
+    },
+}
 
 -- Character selection mode
 config.char_select_bg_color = '#1a1c1f'
@@ -122,13 +135,14 @@ wezterm.on('update-status', function (window)
     local pane = window:active_pane()
     if not pane then return end
 
-    window:set_left_status(wezterm.format {
-        { Attribute = { Intensity = 'Bold' } },
-        { Foreground = { Color = palette.tab_bar.active_tab.fg_color } },
-        { Background = { Color = palette.tab_bar.active_tab.bg_color } },
-        { Text = ('  %s '):format(pane:get_domain_name():upper()) },
-        { Text = (' %s '):format(window:active_workspace():upper()) },
-    })
+    -- window:set_left_status(wezterm.format {
+    --     { Attribute = { Intensity = 'Bold' } },
+    --     { Foreground = { Color = palette.tab_bar.active_tab.fg_color } },
+    --     { Background = { Color = palette.tab_bar.active_tab.bg_color } },
+    --     { Text = ('  %s '):format(pane:get_domain_name():upper()) },
+    --     { Text = (' %s '):format(window:active_workspace():upper()) },
+    -- })
+    window:set_left_status '  '
 
     local active_kt = key_table_labels[window:active_key_table()]
     local meta = pane:get_metadata() or {}
@@ -153,8 +167,7 @@ end)
 wezterm.on('format-tab-title', function (tab)
     local title = tab.tab_title
     if #title == 0 then title = tab.active_pane.title end
-    local title_format = tab.is_active and ' %s ' or '  %s  '
-    return title_format:format(title)
+    return (' %s '):format(title)
 end)
 
 -- Pane

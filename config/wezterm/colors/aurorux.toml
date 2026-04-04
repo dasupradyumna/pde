@@ -1,0 +1,113 @@
+#------------------------------------------ AURORUX THEME -----------------------------------------#
+# Author: Dasu Pradyumna [dasupradyumna@gmail.com]
+# License: MIT
+# [https://github.com/dasupradyumna/aurorux.nvim/tree/main/./extras/wezterm/aurorux.toml]
+
+[metadata]
+author = 'Dasu Pradyumna [dasupradyumna@gmail.com]'
+name = 'aurorux'
+origin_url = 'https://github.com/dasupradyumna/aurorux.nvim/tree/main/extras/wezterm/aurorux.toml'
+
+#---------------------------- TERMINAL COLORS ----------------------------#
+
+[colors]
+
+# Terminal 4-bit colors
+ansi = [
+    '#191b18',
+    '#bb4a4f',
+    '#63a77a',
+    '#a9b670',
+    '#4f9dbc',
+    '#b363a9',
+    '#67afa6',
+    '#b3b9b0',
+]
+brights = [
+    '#626660',
+    '#f0626a',
+    '#96b68f',
+    '#c4c780',
+    '#78b0c4',
+    '#c59bc1',
+    '#9cbdb8',
+    '#ccd4c8',
+]
+
+#-------------------------------- GENERAL --------------------------------#
+
+foreground = '#ccd4c8'
+background = '#191b18'
+cursor_fg = '#191b18'
+cursor_bg = '#ccd4c8'
+cursor_border = '#ccd4c8'
+compose_cursor = '#b363a9'
+# NOTE: Skip `selection_fg` to preserve original FG highlighting
+selection_bg = '#043430'
+visual_bell = '#32100d'
+split = '#414340'
+scrollbar_thumb = '#313330'
+
+#----------------------------- WEZTERM MODES -----------------------------#
+
+copy_mode_active_highlight_fg = { Color = '#191b18' }
+copy_mode_active_highlight_bg = { Color = '#d47452' }
+copy_mode_inactive_highlight_fg = { Color = '#191b18' }
+copy_mode_inactive_highlight_bg = { Color = '#63a77a' }
+
+quick_select_label_fg = { Color = '#191b18' }
+quick_select_label_bg = { Color = '#d47452' }
+quick_select_match_fg = { Color = '#191b18' }
+quick_select_match_bg = { Color = '#63a77a' }
+
+input_selector_label_fg = { Color = '#63a77a' }
+input_selector_label_bg = { Color = '#191b18' }
+
+launcher_label_fg = { Color = '#63a77a' }
+launcher_label_bg = { Color = '#191b18' }
+
+#-------------------------------- TAB BAR --------------------------------#
+
+[colors.tab_bar]
+background = '#191b18'
+inactive_tab_edge = '#414340'
+
+[colors.tab_bar.active_tab]
+fg_color = '#ccd4c8'
+bg_color = '#414340'
+intensity = 'Bold'
+underline = 'None'
+italic = false
+strikethrough = false
+
+[colors.tab_bar.inactive_tab]
+fg_color = '#939990'
+bg_color = '#191b18'
+intensity = 'Normal'
+underline = 'None'
+italic = false
+strikethrough = false
+
+[colors.tab_bar.inactive_tab_hover]
+fg_color = '#b3b9b0'
+bg_color = '#212320'
+intensity = 'Bold'
+underline = 'Single'
+italic = false
+strikethrough = false
+
+[colors.tab_bar.new_tab]
+fg_color = '#939990'
+bg_color = '#191b18'
+intensity = 'Bold'
+underline = 'None'
+italic = false
+strikethrough = false
+
+[colors.tab_bar.new_tab_hover]
+fg_color = '#b3b9b0'
+bg_color = '#212320'
+intensity = 'Bold'
+underline = 'Single'
+italic = false
+strikethrough = false
