@@ -1,0 +1,12 @@
+{
+    "Link": {
+        "prefix": "link",
+        "body": ["[${1:text}](${2:url})$0"],
+        "description": "Insert markdown link"
+    },
+    "Code Block": {
+        "prefix": "code",
+        "body": ["```${1:language}", "$0", "```"],
+        "description": "Insert code block"
+    }
+}
