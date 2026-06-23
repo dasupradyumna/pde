@@ -23,11 +23,21 @@ end
 ---Debug adapter configurations
 local adapter_configs = {
     codelldb = { type = 'executable', command = 'codelldb' },  -- C++ and Rust
-    debugpy = {
-        type = 'executable',
-        command = vim.fs.joinpath(vim.env.HOME, '.local/bin/.debugpy/bin/python'),
-        args = { '-m', 'debugpy.adapter' },
-    },
+    debugpy = function (launcher, config)
+        if config.request == 'launch' then
+            launcher {
+                type = 'executable',
+                command = vim.fs.joinpath(vim.env.HOME, '.pde/bin/.debugpy/bin/python'),
+                args = { '-m', 'debugpy.adapter' },
+            }
+        else
+            launcher {
+                type = 'server',
+                host = config.connect.host or '127.0.0.1',
+                port = config.connect.port,
+            }
+        end
+    end,
 }
 
 ---Global debugger launch configurations
@@ -76,7 +86,7 @@ local nvim_dap = {
         local dap = require('dap')
         dap.adapters = adapter_configs
         dap.configurations = global_launch_configs
-        -- dap.set_log_level 'TRACE' -- Uncomment when needed
+        -- dap.set_log_level 'TRACE'  -- Uncomment when needed
 
         -- Load debug adapter configurations from current project
         local cwd_dap_config = vim.fs.joinpath(vim.uv.cwd(), '.dap.lua')
