@@ -46,17 +46,17 @@ nnoremap <Leader>bs <Cmd>write<CR>
 nnoremap <Leader>bS <Cmd>wall<CR>
 
 " Rename file in buffer
-function! s:rename_buffer()
+function! s:rename_buffer() abort
     let src = expand('%:p')
-    let dst = input('Rename src: ', src)
+    let dst = input('Rename file to: ', src)
     " Skip if target is empty or same as current file
     if dst->empty() || src == dst | return | endif
+    " Write any unsaved changes before rename
+    silent write!
     " Handle error when rename fails
     if rename(src, dst) | call notify#error('Rename failed: %s -> %s', src, dst) | endif
-    " Replace file and buffer in current window
-    silent exe 'write' src '| edit' dst '| bwipeout!' src
-    " Delete older file (rename does not, for some reason)
-    if delete(src) | call notify#error('Delete failed: %s', src) | endif
+    " Replace buffer in current window, and remove older file name buffer
+    silent exe 'edit' dst '| bwipeout! #'
 endfunction
 nnoremap <Leader>br <Cmd>call <SID>rename_buffer()<CR>
 
