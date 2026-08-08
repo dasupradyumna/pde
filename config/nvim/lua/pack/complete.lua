@@ -80,6 +80,7 @@ return {
                                 if #ctx.label_detail > 0 then
                                     return ('%s (%s)'):format(ctx.label, ctx.label_detail)
                                 end
+                                if ctx.kind == 'Snippet' then return ('[%s]'):format(ctx.label) end
                                 return ctx.label
                             end,
                         },
