@@ -1,0 +1,72 @@
+{
+    "Script Guard": {
+        "prefix": "name_main",
+        "body": ["if __name__ == \"__main__\":", "    $0"],
+        "description": "Insert script guard"
+    },
+    "Function": {
+        "prefix": "def",
+        "body": ["def $1($2) -> $3:", "    $0"],
+        "description": "Define function"
+    },
+    "Asynchronous Function": {
+        "prefix": "adef",
+        "body": ["async def $1($2) -> $3:", "    $0"],
+        "description": "Define asynchronous function"
+    },
+    "Match Header": {
+        "prefix": "match",
+        "body": ["match $1:", "    $0"],
+        "description": "Insert match header"
+    },
+    "Case Block": {
+        "prefix": "case",
+        "body": ["case $1:", "    $0"],
+        "description": "Insert match header"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": ["for $1 in $2:", "    $0"],
+        "description": "Insert for loop block"
+    },
+    "While Loop": {
+        "prefix": "while",
+        "body": ["while $1:", "    $0"],
+        "description": "Insert while loop block"
+    },
+    "If Branch": {
+        "prefix": "if",
+        "body": ["if $1:", "    $0"],
+        "description": "Insert if condition branch"
+    },
+    "Elif Branch": {
+        "prefix": "elif",
+        "body": ["elif $1:", "    $0"],
+        "description": "Insert elif condition branch"
+    },
+    "Else Branch": {
+        "prefix": "else",
+        "body": ["else:", "    $0"],
+        "description": "Insert else condition branch"
+    },
+    "Property Getter": {
+        "prefix": "prop-get",
+        "body": ["@property", "def $1(self) -> $3:", "    $0"],
+        "description": "Define property getter"
+    },
+    "Property Setter": {
+        "prefix": "prop-set",
+        "body": ["@$1.setter", "def $1(self, value: $2) -> None:", "    $0"],
+        "description": "Define property setter"
+    },
+    "Context Manager": {
+        "prefix": "with",
+        "body": ["with $1:", "    $0"],
+        "description": "Create context manager"
+    },
+    "Asynchronous Context Manager": {
+        "prefix": "awith",
+        "body": ["async with $1:", "    $0"],
+        "description": "Create asynchronous context manager"
+    }
+}

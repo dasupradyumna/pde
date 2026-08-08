@@ -24,6 +24,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
             local cb_ = #args > 0 and function () cb(unpack(args)) end or cb
             vim.keymap.set('n', k, cb_, { buffer = buffer })
         end
+        nnoremap('gC', vim.lsp.buf.code_action)
         nnoremap('gd', vim.lsp.buf.definition, { reuse_win = true })
         nnoremap('gh', vim.lsp.buf.hover, { border = 'rounded' })
         nnoremap('gih', function ()
@@ -34,8 +35,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end)
 
         -- Enable automatic formatting using LSP formatter
-        vim.api.nvim_clear_autocmds { event = 'BufWritePre', group = group, buffer = buffer }
         if client.server_capabilities.documentFormattingProvider then
+            vim.api.nvim_clear_autocmds { event = 'BufWritePre', group = group, buffer = buffer }
             vim.api.nvim_create_autocmd('BufWritePre', {
                 group = group,
                 buffer = buffer,
