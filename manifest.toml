@@ -1,4 +1,5 @@
 #################################### INSTALL SPECIFICATION LIST ####################################
+# TODO: add ty + ruff languager servers
 
 [[list]]
 group = "wezterm"
@@ -39,6 +40,20 @@ asset = "{name}-linux-x64"
 ext = ".tar.gz"
 install_as = "copy"
 path = "{name}"
+
+[[list]]
+group = "ai"
+[list.meta]
+name = "pi"
+version = "0.84.2"
+[list.installer]
+type = "release_asset"
+repo = "earendil-works/pi"
+tag = "v{version}"
+asset = "{name}-linux-x64"
+ext = ".tar.gz"
+install_as = "symlink"
+path = "{name}/{name}"
 
 ############################## GIT COMPONENTS #############################
 
