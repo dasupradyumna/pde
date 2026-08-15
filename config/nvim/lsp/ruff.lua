@@ -7,6 +7,7 @@ return {
     root_markers = { '.git', 'requirements.txt', 'ty.toml', 'pyproject.toml', 'setup.py' },
     init_options = {
         settings = {
+            -- Reference: https://docs.astral.sh/ruff/editors/settings
             configurationPreference = 'filesystemFirst',
             configuration = {
                 ['fix-only'] = true,

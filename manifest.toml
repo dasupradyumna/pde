@@ -139,6 +139,19 @@ asset = "{name}-linux-x64"
 ext = ".gz"
 install_as = "copy"
 
+[[list]]
+group = "neovim"
+[list.meta]
+name = "uv"
+version = "0.12.5"
+[list.installer]
+type = "release_asset"
+repo = "astral-sh/uv"
+asset = "{name}-x86_64-unknown-linux-gnu"
+ext = ".tar.gz"
+install_as = "copy"
+path = "{name}-x86_64-unknown-linux-gnu/{name}"
+
 ################ LANGUAGE SERVERS ################
 
 [[list]]
@@ -166,6 +179,32 @@ asset = "{name}-{version}-linux-x64"
 ext = ".tar.gz"
 install_as = "symlink"
 path = "bin/{name}"
+
+[[list]]
+group = "neovim"
+[list.meta]
+name = "ruff"
+version = "0.16.3"
+[list.installer]
+type = "release_asset"
+repo = "astral-sh/ruff"
+asset = "{name}-x86_64-unknown-linux-gnu"
+ext = ".tar.gz"
+install_as = "copy"
+path = "{name}-x86_64-unknown-linux-gnu/{name}"
+
+[[list]]
+group = "neovim"
+[list.meta]
+name = "ty"
+version = "0.0.72"
+[list.installer]
+type = "release_asset"
+repo = "astral-sh/ty"
+asset = "{name}-x86_64-unknown-linux-gnu"
+ext = ".tar.gz"
+install_as = "copy"
+path = "{name}-x86_64-unknown-linux-gnu/{name}"
 
 ################# DEBUG ADAPTERS #################
 
