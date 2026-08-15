@@ -123,6 +123,7 @@ struct ReleaseSpec {
     asset: String,
     ext: String,
     install_as: InstallAssetAs,
+    #[serde(default)]
     path: String,
 }
 
@@ -183,11 +184,14 @@ impl Component {
                     .replace("{name}", &self.meta.name)
                     .replace("{version}", &self.meta.version);
                 // Path
-                spec.path = spec
-                    .path
-                    .replace("{asset}", &spec.asset)
-                    .replace("{name}", &self.meta.name)
-                    .replace("{version}", &self.meta.version);
+                spec.path = if spec.path.is_empty() {
+                    self.meta.name.clone()
+                } else {
+                    spec.path
+                        .replace("{asset}", &spec.asset)
+                        .replace("{name}", &self.meta.name)
+                        .replace("{version}", &self.meta.version)
+                };
             },
             Installer::RunScript(_) => {},
         }

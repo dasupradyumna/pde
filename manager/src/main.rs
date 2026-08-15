@@ -23,11 +23,7 @@ fn main() {
     // Run core logic based on execution mode
     let res = match mode {
         Mode::UpgradeSelf(release) => upgrade_self(release),
-        Mode::ManageTools(ctx) => {
-            let res = install_pde(&ctx);
-            cleanup_temp_dir(&ctx.temp_dir);
-            res
-        },
+        Mode::ManageTools(ctx) => install_pde(&ctx),
     };
 
     // Handle error from upstream logic
@@ -142,6 +138,9 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
         format!("{:.3}s", elapsed)
     };
     log!(info, "\n{}\nTotal time taken: {}", "-".repeat(100), time_str);
+
+    // Clean up the temporary directory only in case of no exception
+    cleanup_temp_dir(&ctx.temp_dir);
 
     Ok(())
 }

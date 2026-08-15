@@ -39,7 +39,6 @@ tag = "v{version}"
 asset = "{name}-linux-x64"
 ext = ".tar.gz"
 install_as = "copy"
-path = "{name}"
 
 [[list]]
 group = "ai"
@@ -69,7 +68,6 @@ tag = "v{version}"
 asset = "{name}_{version}_linux_x86_64"
 ext = ".tar.gz"
 install_as = "copy"
-path = "{name}"
 
 [[list]]
 group = "git"
@@ -140,7 +138,6 @@ tag = "v{version}"
 asset = "{name}-linux-x64"
 ext = ".gz"
 install_as = "copy"
-path = "{name}"
 
 ################ LANGUAGE SERVERS ################
 
