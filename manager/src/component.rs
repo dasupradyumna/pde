@@ -137,7 +137,7 @@ enum InstallAssetAs {
 
 #[derive(Debug, Deserialize)]
 struct ScriptSpec {
-    url: String,
+    source: String,
     cmd: String,
     #[serde(default)]
     args: String,
@@ -193,7 +193,9 @@ impl Component {
                         .replace("{version}", &self.meta.version)
                 };
             },
-            Installer::RunScript(_) => {},
+            Installer::RunScript(spec) => {
+                spec.args = spec.args.replace("{version}", &self.meta.version);
+            },
         }
         log!(info, "- Resolved placeholders in component fields");
         self
@@ -471,12 +473,28 @@ fn fetch_and_run_script(
     meta: &Metadata,
     spec: &ScriptSpec,
 ) -> utils::Result<Vec<PathBuf>> {
-    // Determine script file extension from cmd
-    let script_path = ctx.temp_dir.join(format!("{}.{}", meta.name, spec.cmd));
-    log!(debug, "Download script path: {script_path:?}");
+    // Get the file-system path of the installer script
+    let script_path = match reqwest::Url::parse(&spec.source) {
+        // Fetch script if source is URL
+        Ok(url) if matches!(url.scheme(), "http" | "https") => {
+            // Determine script file extension from cmd
+            let fetched = ctx.temp_dir.join(format!("{}.{}", meta.name, spec.cmd));
+            log!(debug, "Script download file path: {fetched:?}");
 
-    // Fetch the script with progress
-    self::fetch_asset_with_progress(&spec.url, &script_path)?;
+            // Fetch the script with progress
+            self::fetch_asset_with_progress(&spec.source, &fetched)?;
+            fetched
+        },
+
+        // Check if the source path is a file-system path
+        _ => {
+            let local = ctx.pde_dir.join(&spec.source);
+            if !local.exists() {
+                return Err(format!("Script source is neither URL nor file path").into());
+            }
+            local
+        },
+    };
 
     // Execute the script
     let status = Command::new(&spec.cmd)

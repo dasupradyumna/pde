@@ -24,7 +24,7 @@ path = "{name}/usr"
 # version = "latest"
 # [list.installer]
 # type = "run_script"
-# url = "https://aider.chat/install.sh"
+# source = "https://aider.chat/install.sh"
 # cmd = "sh"
 
 [[list]]
@@ -46,13 +46,16 @@ group = "ai"
 name = "pi"
 version = "0.84.2"
 [list.installer]
-type = "release_asset"
-repo = "earendil-works/pi"
-tag = "v{version}"
-asset = "{name}-linux-x64"
-ext = ".tar.gz"
-install_as = "symlink"
-path = "{name}/{name}"
+type = "run_script"
+source = "scripts/install_pi_agent.bash"
+cmd = "bash"
+args = "{version}"
+items = [
+    "lib/nvm",
+    "share/bash_completion/completions/node",
+    "share/bash_completion/completions/npm",
+    "share/bash_completion/completions/nvm",
+]
 
 ############################## GIT COMPONENTS #############################
 
