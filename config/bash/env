@@ -8,6 +8,9 @@
 # Ensure all readline programs use custom inputrc
 export INPUTRC="$(dirname -- "${BASH_SOURCE[0]}")/inputrc"
 
+# Ensure all programs use the same config folder
+export XDG_CONFIG_HOME="$HOME/.config"
+
 # Set environment variables
 # FIGNORE, LS_COLORS
 HISTFILESIZE=5000

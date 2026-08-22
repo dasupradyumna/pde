@@ -28,6 +28,13 @@ alias rmd='rm -rf'
 # Copy STDIN into clipboard
 alias xcp='xclip -selection clipboard'
 
+# Aliases to lazy-load NVM default version packages
+__lazy_nvm() { unset -f node npm npx pi; nvm use default &>/dev/null; }
+node() { __lazy_nvm; node $@; }
+npm() { __lazy_nvm; npm $@; }
+npx() { __lazy_nvm; npx $@; }
+pi() { __lazy_nvm; pi $@; }
+
 ############################# AIDER SESSION MANAGER ############################
 
 # Aider sessions directory
