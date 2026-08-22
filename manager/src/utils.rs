@@ -82,3 +82,11 @@ where
     #[cfg(windows)]
     return Ok(std::os::windows::fs::symlink_file(from, to)?);
 }
+
+pub fn strip_prefix_vector(files: Vec<PathBuf>, prefix: &PathBuf) -> self::Result<Vec<PathBuf>> {
+    let mut stripped = Vec::new();
+    for file in files {
+        stripped.push(file.strip_prefix(prefix)?.to_path_buf());
+    }
+    Ok(stripped)
+}

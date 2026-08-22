@@ -7,7 +7,7 @@ mod utils;
 use crate::arguments::{Context, Mode};
 use crate::component::{InstallState, Manifest};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::time::Instant;
 
@@ -103,8 +103,20 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     fs::create_dir_all(&ctx.temp_dir)?;
     log!(debug, "Ensured temp directory exists");
 
-    // Load installation state
+    // Load and verify installation state
     let mut state = InstallState::load(&ctx.state_file)?;
+    match &state.install_prefix {
+        p if p == &PathBuf::default() => state.install_prefix = ctx.install_prefix.clone(),
+        p if p != &ctx.install_prefix => {
+            let msg = format!(
+                "Mismatch between argument and cached installation prefix!\n\
+                - Argument: {:?}\n- Cached: {:?}",
+                &ctx.install_prefix, p
+            );
+            return Err(msg.into());
+        },
+        _ => {},
+    }
 
     // Read install spec file (TOML) into vector of components
     let manifest: Manifest = {

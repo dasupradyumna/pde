@@ -16,6 +16,7 @@ use xz2::read::XzDecoder;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct InstallState {
+    pub install_prefix: PathBuf,
     pub components: HashMap<String, ComponentState>,
 }
 
@@ -243,8 +244,7 @@ fn build_from_source(
     }
 
     log!(info, "- Building from source completed!");
-    let fs_items = spec.items.iter().map(|p| ctx.install_prefix.join(p)).collect();
-    Ok(fs_items)
+    Ok(spec.items.clone())
 }
 
 fn install_to_python_venv(
@@ -290,7 +290,7 @@ fn install_to_python_venv(
     utils::create_symlink(&bin_src, &bin_dst)?;
     log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
 
-    Ok(vec![venv_dir, bin_dst])
+    utils::strip_prefix_vector(vec![venv_dir, bin_dst], &ctx.install_prefix)
 }
 
 fn fetch_and_install_asset(
@@ -401,7 +401,7 @@ fn fetch_and_install_asset(
             // Install binary
             fs::rename(work_dir.join(&spec.path), &bin_dst)?;
             log!(info, "- Installed binary to {bin_dst:?}");
-            Ok(vec![bin_dst.clone()])
+            utils::strip_prefix_vector(vec![bin_dst.clone()], &ctx.install_prefix)
         },
         InstallAssetAs::Folders => {
             // Get the root directory inside asset
@@ -447,7 +447,7 @@ fn fetch_and_install_asset(
                     log!(info, "  - Moved item: {:?}", entry.file_name());
                 }
             }
-            Ok(files)
+            utils::strip_prefix_vector(files, &ctx.install_prefix)
         },
         InstallAssetAs::Symlink => {
             // Install asset as package
@@ -463,7 +463,7 @@ fn fetch_and_install_asset(
             let bin_src = pkg_dst.join(&spec.path);
             utils::create_symlink(&bin_src, &bin_dst)?;
             log!(info, "- Created a symlink: {bin_src:?} -> {bin_dst:?}");
-            Ok(vec![pkg_dst, bin_dst.clone()])
+            utils::strip_prefix_vector(vec![pkg_dst, bin_dst.clone()], &ctx.install_prefix)
         },
     }
 }
@@ -524,7 +524,7 @@ fn fetch_and_run_script(
             log!(debug, "Removed existing binary");
         }
         utils::create_symlink(&spec.bin, &bin_dst)?;
-        files.push(bin_dst.clone());
+        files.push(bin_dst.strip_prefix(&ctx.install_prefix)?.to_path_buf());
         log!(info, "- Created a symlink: {:?} -> {bin_dst:?}", spec.bin);
     }
 
