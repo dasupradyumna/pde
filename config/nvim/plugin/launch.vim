@@ -25,7 +25,7 @@ function! s:ensure_buf_exists(tool) abort
     " Cache the current buffer and focus on scratch buffer to start a job with command
     const curr = bufnr('%')
     keepalt call nvim_win_set_buf(0, tool_info.buf)
-    let tool_info.job = jobstart([a:tool], #{ term: v:true, on_exit: function('s:on_job_exit') })
+    let tool_info.job = jobstart(a:tool, #{ term: v:true, on_exit: function('s:on_job_exit') })
     setlocal filetype=self_tool_launcher
 
     " Keymap to suspend tool
@@ -46,7 +46,7 @@ function! s:float_load_buf(tool) abort
     else
         " Configure floating window to cover entire screen
         const config = #{ relative: 'editor', style: 'minimal',
-                            \ width: &columns, height: &lines, row: 0, col: 0 }
+                            \ width: &columns, height: &lines - 1, row: 0, col: 0 }
         let s:win_id = nvim_open_win(s:active[a:tool].buf, v:true, config)
 
         " Prevent horizontal scrolling and disable statuscolumn
@@ -74,6 +74,8 @@ nnoremap <M-l> <Cmd>call <SID>launch('lazygit')<CR>
 tnoremap <M-l> <Cmd>call <SID>launch('lazygit')<CR>
 nnoremap <M-o> <Cmd>call <SID>launch('opencode')<CR>
 tnoremap <M-o> <Cmd>call <SID>launch('opencode')<CR>
+nnoremap <M-p> <Cmd>call <SID>launch('pi')<CR>
+tnoremap <M-p> <Cmd>call <SID>launch('pi')<CR>
 
 " Send SIGKILL to all active tools
 function! s:kill_active_tools() abort

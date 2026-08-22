@@ -11,10 +11,7 @@ alias dcn='pushd +1 1>/dev/null'
 alias dcp='pushd -0 1>/dev/null'
 
 # Short-hand aliases
-alias a='aider'
 alias e='nvim'
-alias g='lazygit'
-alias o='opencode'
 
 # List permissions of file system object
 alias lmod='stat --printf "    object: %n (%F)\n    perms: (%a) %A\n"'
@@ -33,7 +30,8 @@ __lazy_nvm() { unset -f node npm npx pi; nvm use default &>/dev/null; }
 node() { __lazy_nvm; node $@; }
 npm() { __lazy_nvm; npm $@; }
 npx() { __lazy_nvm; npx $@; }
-pi() { __lazy_nvm; pi $@; }
+pi() { unset -f pi; source "$NVM_DIR/nvm.sh" &>/dev/null; pi $@; }
+export -f pi  # For use inside neovim
 
 ############################# AIDER SESSION MANAGER ############################
 
