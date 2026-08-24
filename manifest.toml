@@ -44,12 +44,12 @@ install_as = "copy"
 group = "ai"
 [list.meta]
 name = "pi"
-version = "0.84.2"
+version = "0.84.3"
 [list.installer]
 type = "run_script"
 source = "scripts/install_pi_agent.bash"
 cmd = "bash"
-args = "{version}"
+args = "{version} {install_prefix}"
 items = [
     "lib/nvm",
     "share/bash_completion/completions/node",

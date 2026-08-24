@@ -195,7 +195,10 @@ impl Component {
                 };
             },
             Installer::RunScript(spec) => {
-                spec.args = spec.args.replace("{version}", &self.meta.version);
+                spec.args = spec
+                    .args
+                    .replace("{version}", &self.meta.version)
+                    .replace("{install_prefix}", &ctx.install_prefix.to_string_lossy());
             },
         }
         log!(info, "- Resolved placeholders in component fields");
