@@ -1,7 +1,9 @@
 /////////////////////////////////// COMMAND-LINE ARGUMENT PARSER ///////////////////////////////////
 
+use crate::component::InstallState;
 use crate::log;
 use crate::utils;
+
 use std::fs;
 use std::path::PathBuf;
 use std::process;
@@ -9,7 +11,7 @@ use std::process;
 #[derive(Debug)]
 pub enum Mode {
     UpgradeSelf(bool),
-    ManageTools(Context),
+    ManageTools((Context, InstallState)),
 }
 
 #[derive(Debug)]
@@ -23,11 +25,13 @@ pub struct Context {
 
 /// Display help message with full command-line argument descriptions
 pub fn help() {
-    println!("Usage: pde-manager [OPTIONS]\n");
+    println!("Usage: pde-manager [OPTIONS]");
+    println!();
     println!("  -h                  Show this help message and exit");
     println!("  -b <BRANCH>         PDE target branch (default: main)");
     println!("  -c <PATH>           PDE parent directory (default: $HOME/projects)");
-    println!("  -i <PATH>           Prefix to installation paths\n");
+    println!("  -i <PATH>           Prefix to installation paths (default: <load from state>)");
+    println!();
     println!("  --upgrade           Upgrade pde-manager (release build)");
     println!("  --upgrade-debug     Upgrade pde-manager (debug build)");
     println!("                      (Assumes CWD is PDE root; fails otherwise)");
@@ -85,43 +89,38 @@ pub fn parse() -> utils::Result<Mode> {
     log!(info, "\nParsing command-line arguments ...");
 
     // Check missing arguments and apply defaults or throw error
-    let arg_b = match arg_b {
-        Some(branch) => {
-            log!(info, "- Parsed clone target branch: {branch}");
-            branch
-        },
-        None => {
-            let default = "main".to_string();
-            log!(info, "- Applying default to clone target branch: {default}");
-            default
-        },
-    };
-    let arg_c = match arg_c {
-        Some(clone_dir) => {
-            log!(info, "- Parsed clone parent dir: {clone_dir:?}");
-            clone_dir
-        },
-        None => {
-            let default = utils::home().join("projects");
-            log!(info, "- Applying default to clone parent dir: {default:?}");
-            default
-        },
-    };
-    let Some(arg_i) = arg_i else {
-        return Err("Missing argument: -i (install prefix dir)".into());
-    };
-    log!(info, "- Parsed install prefix dir: {arg_i:?}");
+    let arg_b = apply_default(arg_b, "main".to_string(), "clone target branch");
+    let arg_c = apply_default(arg_c, utils::home().join("projects"), "clone parent dir");
+    let arg_i = apply_default(arg_i, PathBuf::default(), "install prefix dir");
 
     // Validate tool management context
     let ctx = validate(arg_b, arg_c, arg_i)?;
     Ok(Mode::ManageTools(ctx))
 }
 
+/// Apply default value to optional argument if missing
+fn apply_default<Arg>(opt: Option<Arg>, def: Arg, desc: &str) -> Arg
+where
+    Arg: std::fmt::Debug,
+{
+    match opt {
+        Some(val) => {
+            log!(info, "- Parsed {desc}: {val:?}");
+            val
+        },
+        None => {
+            log!(info, "- Applying default to {desc}: {def:?}");
+            def
+        },
+    }
+}
+
+/// Validate arguments, load and verify installation state to construct context
 fn validate(
     pde_branch: String,
     mut clone_dir: PathBuf,
     mut install_prefix: PathBuf,
-) -> utils::Result<Context> {
+) -> utils::Result<(Context, InstallState)> {
     let ensure_exists_and_writable = |dir: &PathBuf| -> utils::Result<()> {
         // Ensure directory exists
         fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory {dir:?}: {e}"))?;
@@ -140,27 +139,53 @@ fn validate(
         Ok(())
     };
 
-    // Validate and normalize path-based arguments
+    // Validate clone directory and compute PDE directory paths
     ensure_exists_and_writable(&clone_dir)?;
     clone_dir = fs::canonicalize(clone_dir)?;
-    ensure_exists_and_writable(&install_prefix)?;
-    install_prefix = fs::canonicalize(install_prefix)?;
+    let pde_dir = clone_dir.join("pde");
+    let temp_dir = pde_dir.join("temp");
+
+    // Compute state file path and verify cached state
+    let state_file = pde_dir.join("state.toml");
+    let mut state = InstallState::load(&state_file)?;
+    let empty = &PathBuf::default();
+    match (&mut state.install_prefix, &mut install_prefix) {
+        (s, a) if s == empty && a == empty => {
+            let msg = format!("Neither state file nor arguments specify installation prefix!");
+            return Err(msg.into());
+        },
+        (s, a) if s == empty && a != empty => {
+            log!(debug, "Set state installation prefix from argument: {a:?}");
+            *s = (*a).clone();
+        },
+        (s, a) if s != empty && a == empty => {
+            log!(debug, "Set argument installation prefix from state: {s:?}");
+            *a = (*s).clone();
+        },
+        (s, a) if s != a => {
+            let msg = format!(
+                "Mismatch between argument and state file installation prefix!\n\
+                - Argument: {:?}\n- Cached: {:?}",
+                a, s
+            );
+            return Err(msg.into());
+        },
+        _ => {},
+    }
 
     // Validate install prefix directories
+    ensure_exists_and_writable(&install_prefix)?;
+    install_prefix = fs::canonicalize(install_prefix)?;
     for dir in ["bin", "lib", "share"] {
         ensure_exists_and_writable(&install_prefix.join(dir))?;
     }
 
-    // Compute temporary directory and state file path
-    let pde_dir = clone_dir.join("pde");
-    let temp_dir = pde_dir.join("temp");
-    let state_file = pde_dir.join("state.toml");
-
-    Ok(Context {
+    let context = Context {
         pde_branch,
         pde_dir,
         temp_dir,
         install_prefix,
         state_file,
-    })
+    };
+    Ok((context, state))
 }

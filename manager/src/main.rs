@@ -6,8 +6,9 @@ mod utils;
 
 use crate::arguments::{Context, Mode};
 use crate::component::{InstallState, Manifest};
+
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{self, Command};
 use std::time::Instant;
 
@@ -23,7 +24,7 @@ fn main() {
     // Run core logic based on execution mode
     let res = match mode {
         Mode::UpgradeSelf(release) => upgrade_self(release),
-        Mode::ManageTools(ctx) => install_pde(&ctx),
+        Mode::ManageTools((ctx, state)) => install_pde(ctx, state),
     };
 
     // Handle error from upstream logic
@@ -67,7 +68,7 @@ fn upgrade_self(release: bool) -> utils::Result<()> {
     Ok(())
 }
 
-fn install_pde(ctx: &Context) -> utils::Result<()> {
+fn install_pde(ctx: Context, mut state: InstallState) -> utils::Result<()> {
     let start = Instant::now();
 
     // Set up SIGINT handler to clean up temp directory
@@ -103,21 +104,6 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     fs::create_dir_all(&ctx.temp_dir)?;
     log!(debug, "Ensured temp directory exists");
 
-    // Load and verify installation state
-    let mut state = InstallState::load(&ctx.state_file)?;
-    match &state.install_prefix {
-        p if p == &PathBuf::default() => state.install_prefix = ctx.install_prefix.clone(),
-        p if p != &ctx.install_prefix => {
-            let msg = format!(
-                "Mismatch between argument and cached installation prefix!\n\
-                - Argument: {:?}\n- Cached: {:?}",
-                &ctx.install_prefix, p
-            );
-            return Err(msg.into());
-        },
-        _ => {},
-    }
-
     // Read install spec file (TOML) into vector of components
     let manifest: Manifest = {
         let content = fs::read_to_string(ctx.pde_dir.join("manifest.toml"))
@@ -137,7 +123,7 @@ fn install_pde(ctx: &Context) -> utils::Result<()> {
     }
 
     // Manage configs installation
-    self::manage_configs(ctx)?;
+    self::manage_configs(&ctx)?;
 
     // Display elapsed time in human-readable format
     let elapsed = start.elapsed().as_secs_f64();

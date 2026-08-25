@@ -3,15 +3,17 @@
 use crate::arguments::Context;
 use crate::log;
 use crate::utils;
-use chrono::{DateTime, Utc};
-use flate2::read::GzDecoder;
-use serde::{Deserialize, Serialize};
+
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Instant;
+
+use chrono::{DateTime, Utc};
+use flate2::read::GzDecoder;
+use serde::{Deserialize, Serialize};
 use xz2::read::XzDecoder;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
