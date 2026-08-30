@@ -1,0 +1,62 @@
+{
+    "Shebang": {
+        "prefix": "#!",
+        "body": ["#!/usr/bin/env ${1:PROG}"],
+        "description": "Insert script shebang"
+    },
+    "Test Block": {
+        "prefix": "test",
+        "body": ["[ $0 ]"],
+        "description": "Insert test block"
+    },
+    "If Branch": {
+        "prefix": "if",
+        "body": ["if ${1:COND}; then", "    $0", "fi"],
+        "description": "Insert if condition branch"
+    },
+    "Elif Branch": {
+        "prefix": "elif",
+        "body": ["elif ${1:COND}; then", "    $0"],
+        "description": "Insert elif condition branch"
+    },
+    "Else Branch": {
+        "prefix": "else",
+        "body": ["else", "    $0"],
+        "description": "Insert else condition branch"
+    },
+    "Function": {
+        "prefix": "func",
+        "body": ["${1:FUNC}() {", "    $0", "}"],
+        "description": "Define function"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": ["for ${1:VAR} in ${2:LIST}; do", "    $0", "done"],
+        "description": "Insert for loop block"
+    },
+    "For Increment Loop": {
+        "prefix": "fori",
+        "body": ["for (( ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++ )); do", "    $0", "done"],
+        "description": "Insert for (increment) loop block"
+    },
+    "While Loop": {
+        "prefix": "while",
+        "body": ["while ${1:COND}; do", "    $0", "done"],
+        "description": "Insert while loop block"
+    },
+    "Until Loop": {
+        "prefix": "until",
+        "body": ["until ${1:COND}; do", "    $0", "done"],
+        "description": "Insert until loop block"
+    },
+    "Case Block": {
+        "prefix": "case",
+        "body": ["case ${1:VAR} in", "    $0", "esac"],
+        "description": "Insert case block"
+    },
+    "Case Pattern": {
+        "prefix": "casep",
+        "body": ["${1:PAT})", "    $0", "    ${2:;;}"],
+        "description": "Insert case block pattern"
+    }
+}
