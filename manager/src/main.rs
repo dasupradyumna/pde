@@ -162,7 +162,11 @@ fn manage_configs(ctx: &Context) -> utils::Result<()> {
 
         // All other tools just need their config folders symlink to standard config path
         let src_config = config.path();
-        let dst_config = dst_dir.join(&config_name);
+        let dst_config = if config_name == "pi" {
+            utils::home().join(".pi") // Pi global config lives at ~/.pi
+        } else {
+            dst_dir.join(&config_name)
+        };
 
         // Remove existing symlink
         if dst_config.exists() {

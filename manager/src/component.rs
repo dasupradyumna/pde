@@ -83,6 +83,7 @@ pub struct Component {
 enum Group {
     AI,
     Git,
+    Misc,
     Neovim,
     WezTerm,
 }
@@ -185,6 +186,7 @@ impl Component {
                 spec.asset = spec
                     .asset
                     .replace("{name}", &self.meta.name)
+                    .replace("{tag}", &spec.tag)
                     .replace("{version}", &self.meta.version);
                 // Path
                 spec.path = if spec.path.is_empty() {

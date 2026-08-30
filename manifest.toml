@@ -2,6 +2,20 @@
 # TODO: add ty + ruff languager servers
 
 [[list]]
+group = "misc"
+[list.meta]
+name = "fd"
+version = "10.5.0"
+[list.installer]
+type = "release_asset"
+repo = "sharkdp/fd"
+tag = "v{version}"
+asset = "{name}-{tag}-x86_64-unknown-linux-gnu"
+ext = ".tar.gz"
+install_as = "copy"
+path = "{asset}/{name}"
+
+[[list]]
 group = "wezterm"
 [list.meta]
 name = "wezterm"
