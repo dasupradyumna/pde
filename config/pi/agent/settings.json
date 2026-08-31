@@ -1,0 +1,32 @@
+{
+  "lastChangelogVersion": "0.84.3",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-sonnet-5",
+  "defaultThinkingLevel": "low",
+  "showCacheMissNotices": true,
+  "theme": "dark",
+  "editorPaddingX": 2,
+  "warnings": {
+    "anthropicExtraUsage": false
+  },
+  "terminal": {
+    "imageWidthCells": 80,
+    "showTerminalProgress": true
+  },
+  "defaultTools": [
+    "bash",
+    "edit",
+    "read",
+    "write",
+    "find",
+    "grep",
+    "ls"
+  ],
+  "markdown": {
+    "codeBlockIndent": "    "
+  },
+  "packages": [
+    "npm:@gotgenes/pi-anthropic-auth",
+    "npm:pi-system-prompt"
+  ]
+}

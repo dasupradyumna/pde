@@ -1,0 +1,12 @@
+# Binaries downloaded by Pi
+bin/
+
+# NPM Packages installed for Pi
+npm/
+
+# Machine-local agent sessions
+sessions/
+
+# Provider and model information
+auth.json
+models-store.json

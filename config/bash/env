@@ -1,5 +1,5 @@
 ################################### CUSTOM ENVIRONMENT VARIABLES ###################################
-# ex: ft=bash
+# ex: ft=sh
 
 # Ensures terminal supports 256 colors + truecolor
 [ "$TERM" != "xterm-256color" ] && export TERM=xterm-256color
@@ -7,6 +7,10 @@
 
 # Ensure all readline programs use custom inputrc
 export INPUTRC="$(dirname -- "${BASH_SOURCE[0]}")/inputrc"
+
+# Set default terminal editor to neovim
+export EDITOR="nvim"
+export VISUAL="$EDITOR"
 
 # Ensure all programs use the same config folder
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -25,3 +29,6 @@ ensure_path_in_env() {
 }
 ensure_path_in_env 'PATH' "$HOME/.pde/bin"
 ensure_path_in_env 'XDG_DATA_DIRS' "$HOME/.pde/share"
+
+# Disable all startup network operations (update checks and telemetry) for Pi coding agent
+export PI_OFFLINE=1
