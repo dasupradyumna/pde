@@ -138,7 +138,7 @@ local nvim_dap = {
         -- Set up keymaps local to the active debug session
         local is_debug_active = false
         dap.listeners.after.event_initialized.debug_map_keys = function ()
-            vim.cmd [[highlight! link StatusLine Keyword]]
+            vim.cmd [[highlight! link StatusLine Function]]
             is_debug_active = true
             nnoremap('<Leader>dC', dap.run_to_cursor)
             nnoremap('<Leader>dp', dap.pause)
@@ -153,6 +153,7 @@ local nvim_dap = {
 
         ---Remove keymaps local to the active debug session
         local function debug_unmap_keys()
+            -- TODO: how to restore previous highlight without hard-coding?
             vim.cmd [[highlight! link StatusLine Comment]]
             if is_debug_active then
                 nunmap '<Leader>dp'
