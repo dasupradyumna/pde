@@ -23,6 +23,7 @@ return {
                 'c', 'cpp', 'cuda', 'rust',               -- Low-level languages
                 'cmake', 'make',                          -- Build tools
                 'json', 'toml', 'xml', 'yaml',            -- Configuration
+                'javascript', 'typescript',               -- Web-development languages
             }
         end,
     },

@@ -26,7 +26,6 @@
     "codeBlockIndent": "    "
   },
   "packages": [
-    "npm:@gotgenes/pi-anthropic-auth",
-    "npm:pi-system-prompt"
+    "npm:@gotgenes/pi-anthropic-auth"
   ]
 }
