@@ -13,15 +13,6 @@
     "imageWidthCells": 80,
     "showTerminalProgress": true
   },
-  "defaultTools": [
-    "bash",
-    "edit",
-    "read",
-    "write",
-    "find",
-    "grep",
-    "ls"
-  ],
   "markdown": {
     "codeBlockIndent": "    "
   },
