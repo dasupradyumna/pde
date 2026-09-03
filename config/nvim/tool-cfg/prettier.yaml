@@ -1,0 +1,6 @@
+#----------------------------------------- PRETTIER CONFIG ----------------------------------------#
+# Reference: https://prettier.io/docs/options
+
+printWidth: 100
+tabWidth: 4
+proseWrap: always

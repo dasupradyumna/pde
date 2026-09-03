@@ -26,12 +26,13 @@ alias rmd='rm -rf'
 alias xcp='xclip -selection clipboard'
 
 # Aliases to lazy-load NVM default version packages
-__lazy_nvm() { unset -f node npm npx pi; nvm use default &>/dev/null; }
+__lazy_nvm() { unset -f nvm node npm npx pi; source "$NVM_DIR/nvm.sh" 1>/dev/null; }
+nvm() { __lazy_nvm; nvm $@; }
 node() { __lazy_nvm; node $@; }
 npm() { __lazy_nvm; npm $@; }
 npx() { __lazy_nvm; npx $@; }
-pi() { unset -f pi; source "$NVM_DIR/nvm.sh" &>/dev/null; pi $@; }
-export -f pi  # For use inside neovim
+pi() { __lazy_nvm; pi $@; }
+export -f __lazy_nvm npx pi  # For use inside neovim
 
 ############################# AIDER SESSION MANAGER ############################
 

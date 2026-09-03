@@ -16,7 +16,3 @@ shopt -s checkhash checkjobs dirspell hostcomplete huponexit progcomp_alias shif
 for module in "$(dirname -- "${BASH_SOURCE[0]}")"/*.sh; do source "$module"; done
 
 unset -v module
-
-# Load NVM environment
-export NVM_DIR="$HOME/.pde/lib/nvm"
-source "$NVM_DIR/nvm.sh" --no-use

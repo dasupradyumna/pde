@@ -30,5 +30,8 @@ ensure_path_in_env() {
 ensure_path_in_env 'PATH' "$HOME/.pde/bin"
 ensure_path_in_env 'XDG_DATA_DIRS' "$HOME/.pde/share"
 
+# Node Version Manager - NVM package directory
+export NVM_DIR="$HOME/.pde/lib/nvm"
+
 # Disable all startup network operations (update checks and telemetry) for Pi coding agent
 export PI_OFFLINE=1
