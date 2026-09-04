@@ -26,8 +26,8 @@ function ui#tabline()
     for tab in nvim_list_tabpages()
         " Tab name highlight
         let tabline ..= tab == nvim_get_current_tabpage() ? '%#TabLineSel#' : '%#TabLine#'
-        try | let name = nvim_tabpage_get_var(tab, 'tabpage_name')
-        catch | let name = '[no name]' | endtry
+        let name = v:lua.require('self.tabpage').get_name(tab, 'NO_NAME')
+        let name = name != '' ? name : 'NO_NAME'
         let tabline ..= ' ' .. name .. ' '
         let n_chars += len(name) + 2
     endfor

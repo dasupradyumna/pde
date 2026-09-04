@@ -4,13 +4,13 @@ local tabpage = {}
 
 ---Get the name of a tabpage
 ---@param tabid integer Tabpage ID
+---@param default? string Default tabpage name
 ---@return string # Tabpage name
-function tabpage.get_name(tabid) return vim.api.nvim_tabpage_get_var(tabid, 'tabpage_name') end
-
----Check if a tabpage has a name
----@param tabid integer Tabpage ID
----@return boolean # True if the tabpage has a name
-function tabpage.has_name(tabid) return pcall(tabpage.get_name, tabid) end
+function tabpage.get_name(tabid, default)
+    default = default or ''
+    local ok, name = pcall(vim.api.nvim_tabpage_get_var, tabid, 'tabpage_name')
+    return ok and name or default
+end
 
 ---Set the name of a tabpage
 ---@param tabid integer Tabpage ID
@@ -19,12 +19,12 @@ function tabpage.set_name(tabid, name) vim.api.nvim_tabpage_set_var(tabid, 'tabp
 
 --- Prompt the user to set the name of a tabpage
 ---@param tabid integer Tabpage ID
----@param curr_name string? Current tabpage name
+---@param curr_name? string Current tabpage name
 ---@return boolean # True if the name was successfully set
 local function prompt_and_set_name(tabid, curr_name)
     -- Create a list of existing tabpage names
     local existing_names = vim.iter(vim.api.nvim_list_tabpages()):fold({}, function (dict, t)
-        if t ~= tabid then dict[tabpage.get_name(t)] = true end
+        if t ~= tabid then dict[tabpage.get_name(t, 'NO_NAME')] = true end
         return dict
     end)
 
@@ -43,21 +43,25 @@ local function prompt_and_set_name(tabid, curr_name)
                 highlight = function (name)
                     -- Error highlight characters beyond max length
                     if #name > MAX_LEN_NAME then return { { MAX_LEN_NAME, #name, 'ErrorMsg' } } end
-                    -- Error highlight for conflict with existing names
-                    if existing_names[name] then return { { 0, #name, 'ErrorMsg' } } end
+                    -- Error highlight for conflict with existing or reserved names
+                    if existing_names[name] or name == 'NO_NAME' then
+                        return { { 0, #name, 'ErrorMsg' } }
+                    end
                     return {}
                 end,
                 prompt = ' Set tabpage name: ',
                 default = curr_name or '',
             },
             ---Callback for user input processing
-            ---@param name string? String from prompt (if any)
+            ---@param name? string String from prompt (if any)
             function (name)
                 name = name or curr_name
                 if not name then                  -- Exit: cancelled prompt
                     msg = 'fail'
                 elseif name == '' then            -- Check: name empty
                     msg = ' Name cannot be empty.'
+                elseif name == 'NO_NAME' then     -- Check: reserved name
+                    msg = ' "NO_NAME" is reserved.'
                 elseif existing_names[name] then  -- Check: name already taken
                     msg = (' Name "%s" is already taken.'):format(name)
                 elseif #name > MAX_LEN_NAME then  -- Check: name too long
@@ -76,7 +80,9 @@ end
 
 ---Update the internal tabpage name list
 function tabpage.update_name_list()
-    tabpage.names = vim.iter(vim.api.nvim_list_tabpages()):map(tabpage.get_name):totable()
+    tabpage.names = vim.iter(vim.api.nvim_list_tabpages()):map(function (tabid)
+        return tabpage.get_name(tabid, 'NO_NAME')
+    end):totable()
 end
 
 ---Create a new tabpage with a user-chosen name
@@ -90,9 +96,7 @@ end
 ---Rename the current tabpage
 function tabpage.rename()
     local tabid = vim.api.nvim_get_current_tabpage()
-    local ok, name = pcall(tabpage.get_name, tabid)
-    if not ok then name = '' end
-    prompt_and_set_name(tabid, name)
+    prompt_and_set_name(tabid, tabpage.get_name(tabid))
     tabpage.update_name_list()
 end
 

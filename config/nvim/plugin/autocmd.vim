@@ -69,7 +69,7 @@ augroup __self__general__
 
     " Set default tabpage name if no session is loaded
     autocmd VimEnter *
-                \ if !exists('g:SessionLoad') && !v:lua.require('self.tabpage').has_name(0) |
+                \ if !exists('g:SessionLoad') && v:lua.require('self.tabpage').get_name(0) == '' |
                 \     call v:lua.require('self.tabpage').set_name(0, 'main') |
                 \     call v:lua.require('self.tabpage').update_name_list() |
                 \ endif
