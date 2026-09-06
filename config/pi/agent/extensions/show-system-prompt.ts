@@ -5,8 +5,8 @@
  * Reference: https://github.com/jandrikus/pi-system-prompt
  */
 
-import type { ExtensionAPI, Theme, ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Key, matchesKey, visibleWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui";
+import type { ExtensionAPI, Theme, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import { Key, matchesKey, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 
 export default function (pi: ExtensionAPI) {
     pi.registerCommand("system-prompt", {
@@ -22,7 +22,7 @@ export default function (pi: ExtensionAPI) {
 
             // Gather active tool definitions
             const activeToolNames = new Set(pi.getActiveTools());
-            const activeTools = pi.getAllTools().filter(t => activeToolNames.has(t.name));
+            const activeTools = pi.getAllTools().filter((t) => activeToolNames.has(t.name));
 
             // Build tool definition text lines
             const toolLines = buildToolLines(activeTools);
@@ -77,12 +77,7 @@ function buildToolLines(tools: ToolDefinition[]): string[] {
 
     for (const tool of tools) {
         const source = tool.sourceInfo?.source ?? "unknown";
-        const sourceText =
-            source === "builtin"
-                ? "built-in"
-                : source === "sdk"
-                    ? "SDK"
-                    : source;
+        const sourceText = source === "builtin" ? "built-in" : source === "sdk" ? "SDK" : source;
 
         lines.push(`name: ${tool.name}`);
         lines.push(`  description: ${tool.description}`);
@@ -151,8 +146,8 @@ function styleContinuation(th: Theme, text: string, style: LineStyle): string {
 
 /** Enable SGR mouse mode (button events + extended coordinates). */
 function enableMouse(): void {
-    process.stdout.write("\x1b[?1000h");  // basic button tracking
-    process.stdout.write("\x1b[?1006h");  // SGR extended coordinates
+    process.stdout.write("\x1b[?1000h"); // basic button tracking
+    process.stdout.write("\x1b[?1006h"); // SGR extended coordinates
 }
 
 /** Disable SGR mouse mode. */
@@ -233,10 +228,7 @@ class SystemPromptView {
             return;
         }
         if (matchesKey(data, "ctrl+d")) {
-            this.scrollOffset = Math.min(
-                Math.max(0, total - visible),
-                this.scrollOffset + visible,
-            );
+            this.scrollOffset = Math.min(Math.max(0, total - visible), this.scrollOffset + visible);
             return;
         }
         if (matchesKey(data, "g")) {
@@ -329,11 +321,10 @@ class SystemPromptView {
                 ? Math.round((this.scrollOffset / displayLines.length) * 100)
                 : 0;
         const footerLeft = `${this.scrollOffset + 1}-${end}/${displayLines.length} (${pct}%)`;
-        const copyLabel = Date.now() - this.copiedAt < 2000
-            ? th.fg("success", "copied")
-            : "copy";
-        const footerRight = `c: ${copyLabel}` +
-                    " │ j/k: down/up 1 line │ C-U/C-D: down/up 1 page │ g/G: top/bottom │ q: quit ";
+        const copyLabel = Date.now() - this.copiedAt < 2000 ? th.fg("success", "copied") : "copy";
+        const footerRight =
+            `c: ${copyLabel}` +
+            " │ j/k: down/up 1 line │ C-U/C-D: down/up 1 page │ g/G: top/bottom │ q: quit ";
         const leftVis = visibleWidth(footerLeft);
         const rightVis = visibleWidth(footerRight);
         const gap = Math.max(1, innerW - 1 - leftVis - rightVis);
