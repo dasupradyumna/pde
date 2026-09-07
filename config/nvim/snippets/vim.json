@@ -1,0 +1,27 @@
+{
+    "Function": {
+        "prefix": "func",
+        "body": ["function! ${1:FUNC}(${2:ARGS})", "    $0", "endfunction"],
+        "description": "Define function"
+    },
+    "If Branch": {
+        "prefix": "if",
+        "body": ["if ${1:COND}", "    $0", "endif"],
+        "description": "Insert if condition branch"
+    },
+    "Elif Branch": {
+        "prefix": "elif",
+        "body": ["elseif ${1:COND}", "    $0"],
+        "description": "Insert elif condition branch"
+    },
+    "Autocommand": {
+        "prefix": "auto",
+        "body": ["autocmd ${1:EVENT} ${2:*} $0"],
+        "description": "Insert elif condition branch"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": ["for ${1:VAR} in ${2:ITER}:", "    $0"],
+        "description": "Insert for loop block"
+    }
+}
