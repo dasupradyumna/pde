@@ -1,6 +1,9 @@
 ################################### CUSTOM ENVIRONMENT VARIABLES ###################################
 # ex: ft=sh
 
+# PDE install directory
+export PDE_DIR="$HOME/.pde"
+
 # Ensures terminal supports 256 colors + truecolor
 [ "$TERM" != "xterm-256color" ] && export TERM=xterm-256color
 [ "$COLORTERM" != "truecolor" ] && export COLORTERM=truecolor
@@ -27,11 +30,11 @@ ensure_path_in_env() {
         *) export "$env"="$path:${!env}" ;;
     esac
 }
-ensure_path_in_env 'PATH' "$HOME/.pde/bin"
-ensure_path_in_env 'XDG_DATA_DIRS' "$HOME/.pde/share"
+ensure_path_in_env 'PATH' "$PDE_DIR/bin"
+ensure_path_in_env 'XDG_DATA_DIRS' "$PDE_DIR/share"
 
 # Node Version Manager - NVM package directory
-export NVM_DIR="$HOME/.pde/lib/nvm"
+export NVM_DIR="$PDE_DIR/lib/nvm"
 
 # Disable all startup network operations (update checks and telemetry) for Pi coding agent
 export PI_OFFLINE=1

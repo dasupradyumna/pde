@@ -8,7 +8,7 @@ use crate::arguments::{Context, Mode};
 use crate::component::{InstallState, Manifest};
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::time::Instant;
 
@@ -211,6 +211,39 @@ fn manage_configs(ctx: &Context) -> utils::Result<()> {
     } else {
         fs::write(&bashrc, format!("{}{}", content, entrypoint))?;
         log!(info, "- Added PDE bash entry point to {bashrc:?}");
+    }
+
+    // Manage PDE_DIR environment variable to reflect active installation prefix
+    self::manage_pde_dir_env(ctx)?;
+
+    Ok(())
+}
+
+fn manage_pde_dir_env(ctx: &Context) -> utils::Result<()> {
+    let env_path = ctx.pde_dir.join("config/bash/env");
+    let content = fs::read_to_string(&env_path)?;
+    let home_str = utils::home().display().to_string();
+    let target = ctx.install_prefix.display().to_string();
+
+    // NOTE: There will be exactly one `export PDE_DIR=...` line in the file
+    let old_line = content
+        .lines()
+        .find(|line| line.starts_with("export PDE_DIR="))
+        .ok_or_else(|| format!("No `PDE_DIR` declaration found in {env_path:?}"))?;
+    let current = old_line
+        .trim_start_matches("export PDE_DIR=")
+        .trim_matches('"')
+        .replace("$HOME", &home_str);
+    let current_path = fs::canonicalize(&current).unwrap_or_else(|_| PathBuf::from(&current));
+
+    // Update env file only if contents don't match active install_prefix
+    if current_path != ctx.install_prefix {
+        let new_line = format!("export PDE_DIR=\"{}\"", target);
+        let new_content = content.replacen(old_line, &new_line, 1);
+        fs::write(&env_path, new_content)?;
+        log!(info, "- Updated PDE_DIR in {env_path:?} to {target:?}");
+    } else {
+        log!(info, "- PDE_DIR already matches installation prefix in {env_path:?}");
     }
 
     Ok(())
