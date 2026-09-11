@@ -10,7 +10,7 @@ vim.g.maplocalleader = ':'
 -- Custom filetypes
 vim.filetype.add {
     filename = { ['docker.build-args'] = 'sh' },
-    extension = { launch = 'xml' },
+    extension = { jsonl = 'json', launch = 'xml' },
 }
 
 ------------------ REMOVE IN V0.12 : LAZY.NVIM BOOTSTRAP ------------------

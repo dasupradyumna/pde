@@ -5,11 +5,10 @@ let b:user_ftplugin = 1
 
 "------------------------- Auto-format using Prettier -------------------------"
 
-const s:config_path = stdpath("config") .. "/tool-cfg/prettier.yaml"
-
 function! s:prettier_format_buffer()
     redir => output
-        silent exe "!npx prettier --config" s:config_path "--write" expand("%:p")
+        silent exe printf("!npx prettier --config %s/tool-cfg/prettier.yaml --write %s",
+                    \ stdpath("config"), expand("%:p"))
     redir END
     if v:shell_error
         call v:lua.vim.notify("Formatting failed!" .. output, 3)
