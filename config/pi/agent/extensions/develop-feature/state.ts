@@ -7,7 +7,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { State } from "./types.ts";
 
-export const STATE_ENTRY_TYPE = "develop-feature-state";
+export const STATE_ENTRY_TYPE = "develop-feature";
 
 export function getState(ctx: ExtensionContext): State | undefined {
     const entries = ctx.sessionManager.getEntries();
