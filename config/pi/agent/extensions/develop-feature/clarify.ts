@@ -12,7 +12,7 @@ import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 import { getState, persistState } from "./state.ts";
 import { applyToolsForCurrentPhase } from "./phase-tools.ts";
 import { navigateToSessionStart } from "./session-nav.ts";
-import { slugifyFeature, specPath } from "./slug.ts";
+import { slugifyFeature, specPath, specRelativePath } from "./slug.ts";
 
 const FEATURE_TITLE_MODEL = "anthropic/claude-haiku-4-5";
 const MAX_FALLBACK_TITLE_LENGTH = 30;
@@ -67,8 +67,8 @@ clarifying conversation. Follow these rules:
 - Before asking anything, use \`read\`/\`bash\` to explore the existing codebase so your questions
   are grounded in how this project actually works (structure, conventions, and existing related
   features) rather than generic.
-- Ask ONE clarifying question at a time - never dump a big upfront list of questions. Wait for the
-  user's answer before asking the next one.
+- Ask clarifying questions in a batch. NEVER ask questions one at a time. If more clarification is
+  required after user answers a batch, ask another batch of follow-up questions.
 - Focus your questions on scope (what's in/out), edge cases, constraints (technical, compatibility,
   performance), and success criteria (how we'll know this is done and correct).
 - Keep going until the requirements are genuinely clear and complete enough to write a precise,
@@ -80,33 +80,55 @@ clarifying conversation. Follow these rules:
   parameter - the destination is already fixed for this session).`;
 }
 
+function buildClarifyFeedbackKickoff(feedback: string, specRelPath: string): string {
+    return `The user has feedback on the current SPEC.md (\`${specRelPath}\`):
+"""
+${feedback}
+"""
+
+Discuss and refine as needed, following the same rules as before (grounded in the codebase, etc.),
+then call \`write_spec\` again with the complete, updated SPEC.md after the user approves it.`;
+}
+
 export function registerClarify(pi: ExtensionAPI): void {
     pi.registerCommand("clarify", {
         description:
-            "Start clarifying a new feature request (Clarify -> Plan -> Implement -> Commit)",
+            "Start clarifying a new feature request, or " +
+            "revise existing spec for the current one with feedback",
         handler: async (args, ctx) => {
             const state = getState(ctx);
-            if (state !== undefined) {
+
+            if (state === undefined) {
+                const request = args.trim();
+                if (request.length === 0) {
+                    ctx.ui.notify("Usage: /clarify <feature request>", "warning");
+                    return;
+                }
+
+                const title = await generateFeatureTitle(pi, ctx, request);
+                const slug = slugifyFeature(title);
+                await navigateToSessionStart(pi, ctx);
+                persistState(pi, { feature: slug, phase: "clarifying" });
+                applyToolsForCurrentPhase(pi, ctx);
+                pi.sendUserMessage(buildClarifyKickoff(request));
+            } else if (state.phase === "clarified") {
+                const feedback = args.trim();
+                if (feedback.length === 0) {
+                    ctx.ui.notify("Usage: /clarify <feedback>", "warning");
+                    return;
+                }
+
+                persistState(pi, { feature: state.feature, phase: "clarifying" });
+                applyToolsForCurrentPhase(pi, ctx);
+                pi.sendUserMessage(
+                    buildClarifyFeedbackKickoff(feedback, specRelativePath(state.feature)),
+                );
+            } else {
                 ctx.ui.notify(
-                    `A feature is already in progress in this session (phase: "${state.phase}"). ` +
-                        "Start a new session to clarify a different feature.",
+                    `\`/clarify\` is not available right now (current phase: "${state.phase}").`,
                     "warning",
                 );
-                return;
             }
-
-            const request = args.trim();
-            if (request.length === 0) {
-                ctx.ui.notify("Usage: /clarify <feature request>", "warning");
-                return;
-            }
-
-            const title = await generateFeatureTitle(pi, ctx, request);
-            const slug = slugifyFeature(title);
-            await navigateToSessionStart(pi, ctx);
-            persistState(pi, { feature: slug, phase: "clarifying" });
-            applyToolsForCurrentPhase(pi, ctx);
-            pi.sendUserMessage(buildClarifyKickoff(request));
         },
     });
 

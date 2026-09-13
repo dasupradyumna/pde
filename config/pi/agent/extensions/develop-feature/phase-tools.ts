@@ -9,7 +9,7 @@ import { getState } from "./state.ts";
 export const PHASE_TOOLS: Record<string, string[]> = {
     clarifying: ["read", "bash", "write_spec"],
     planning: ["read", "bash", "write_plan"],
-    implementing: ["read", "bash", "edit", "write"],
+    implementing: ["read", "bash", "edit", "write", "write_commit"],
 };
 
 /** All builtin tool names, recomputed each call (robust to future builtin additions). */

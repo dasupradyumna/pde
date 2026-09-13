@@ -12,7 +12,13 @@ import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 import { getState, persistState } from "./state.ts";
 import { applyToolsForCurrentPhase } from "./phase-tools.ts";
 import { navigateToSessionStart } from "./session-nav.ts";
-import { listArtifactSlugsWithFile, planPath, specPath, specRelativePath } from "./slug.ts";
+import {
+    listArtifactSlugsWithFile,
+    planPath,
+    planRelativePath,
+    specPath,
+    specRelativePath,
+} from "./slug.ts";
 import { validatePlan } from "./plan-format.ts";
 
 function buildPlanKickoff(slug: string, specRelPath: string): string {
@@ -59,9 +65,21 @@ numbering gap, a title mismatch, a missing or duplicate heading) - fix it and ca
 \`write_plan\` again in the same turn.`;
 }
 
+function buildPlanFeedbackKickoff(feedback: string, planRelPath: string): string {
+    return `The user has feedback on the current PLAN.md (\`${planRelPath}\`):
+"""
+${feedback}
+"""
+
+Discuss and refine as needed, then call \`write_plan\` again with the complete, updated PLAN.md
+(the same required format rules from before still apply) once the user confirms it's final.`;
+}
+
 export function registerPlan(pi: ExtensionAPI): void {
     pi.registerCommand("plan", {
-        description: "Plan the currently clarified feature into implementation slices",
+        description:
+            "Plan the currently clarified feature into implementation slices, or " +
+            "revise the plan for the current one with feedback",
         getArgumentCompletions: (prefix) => {
             // Cheap heuristic: we can't read session state here (no ctx), so we always
             // offer completions from .artifacts/*/SPEC.md - harmless when args aren't
@@ -91,6 +109,19 @@ export function registerPlan(pi: ExtensionAPI): void {
                     return;
                 }
                 slug = state.feature;
+            } else if (state.phase === "planned") {
+                const feedback = args.trim();
+                if (feedback.length === 0) {
+                    ctx.ui.notify("Usage: /plan <feedback>", "warning");
+                    return;
+                }
+
+                persistState(pi, { feature: state.feature, phase: "planning" });
+                applyToolsForCurrentPhase(pi, ctx);
+                pi.sendUserMessage(
+                    buildPlanFeedbackKickoff(feedback, planRelativePath(state.feature)),
+                );
+                return;
             } else {
                 ctx.ui.notify(
                     `\`/plan\` is not available right now (current phase: "${state.phase}").`,
