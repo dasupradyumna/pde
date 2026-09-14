@@ -7,20 +7,26 @@
 import { existsSync } from "node:fs";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { getState, persistState } from "./state.ts";
-import { applyToolsForCurrentPhase } from "./phase-tools.ts";
-import { navigateToSessionStart } from "./session-nav.ts";
-import { listArtifactSlugsWithFile, planPath, planRelativePath, specRelativePath } from "./slug.ts";
+import {
+    formatImplementedPhase,
+    navigateToSessionStart,
+    parseImplementedPhase,
+    readState,
+    transitionTo,
+} from "../workflow.ts";
 import {
     computeProgress,
     findFirstPendingSlice,
     findReviewSlices,
     getSliceDetail,
+    listArtifactSlugsWithFile,
     loadPlanStatusList,
     parseStatusSection,
+    planPath,
+    planRelativePath,
+    specRelativePath,
     writeSliceState,
-} from "./plan-format.ts";
-import { formatImplementedPhase, isImplementedPhase, parseImplementedPhase } from "./types.ts";
+} from "../artifacts.ts";
 
 function buildImplementKickoff(
     slug: string,
@@ -58,7 +64,8 @@ export function registerImplement(pi: ExtensionAPI): void {
             }));
         },
         handler: async (args, ctx) => {
-            const state = getState(ctx);
+            const state = readState(ctx);
+            const implementedProgress = state ? parseImplementedPhase(state.phase) : undefined;
             let slug: string;
 
             if (state === undefined) {
@@ -77,9 +84,8 @@ export function registerImplement(pi: ExtensionAPI): void {
                     return;
                 }
                 slug = state.feature;
-            } else if (isImplementedPhase(state.phase)) {
-                const progress = parseImplementedPhase(state.phase)!;
-                if (progress.x >= progress.y) {
+            } else if (implementedProgress !== undefined) {
+                if (implementedProgress.x >= implementedProgress.y) {
                     ctx.ui.notify(
                         `All slices for "${state.feature}" are already implemented and committed.`,
                         "warning",
@@ -88,7 +94,7 @@ export function registerImplement(pi: ExtensionAPI): void {
                 }
                 if (args.trim().length > 0) {
                     ctx.ui.notify(
-                        "No arguments expected once a feature has been planned in this session.",
+                        "No arguments expected once a feature is being implemented in this session.",
                         "warning",
                     );
                     return;
@@ -135,8 +141,7 @@ export function registerImplement(pi: ExtensionAPI): void {
             await writeSliceState(plan, content, pending.number, "-");
 
             await navigateToSessionStart(pi, ctx);
-            persistState(pi, { feature: slug, phase: "implementing" });
-            applyToolsForCurrentPhase(pi, ctx);
+            transitionTo(pi, ctx, { feature: slug, phase: "implementing" });
             pi.sendUserMessage(buildImplementKickoff(slug, pending.number, pending.title, detail));
         },
     });
@@ -151,7 +156,7 @@ export function registerImplement(pi: ExtensionAPI): void {
             message: Type.String({ description: "Full git commit message" }),
         }),
         async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-            const state = getState(ctx);
+            const state = readState(ctx);
             if (!state || state.phase !== "implementing") {
                 throw new Error(
                     "write_commit is only usable while a slice is pending review (i.e. right " +
@@ -226,8 +231,7 @@ export function registerImplement(pi: ExtensionAPI): void {
             const newStatusList = parseStatusSection(newContent);
             const { x, y } = computeProgress(newStatusList ?? []);
 
-            persistState(pi, { feature: state.feature, phase: formatImplementedPhase(x, y) });
-            applyToolsForCurrentPhase(pi, ctx);
+            transitionTo(pi, ctx, { feature: state.feature, phase: formatImplementedPhase(x, y) });
 
             let summary = committed
                 ? `Committed${commitHash ? ` (${commitHash})` : ""}. Slice ${slice.number} marked done. Progress: ${x}/${y}.`

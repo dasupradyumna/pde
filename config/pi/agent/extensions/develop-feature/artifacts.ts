@@ -1,13 +1,10 @@
 /**
- * PLAN.md grammar (parse / validate / mutate) plus the shared file I/O entry points
- * for reading and writing PLAN.md. This is the only place that touches PLAN.md on
- * disk; /plan's write_plan tool writes the initial file itself (via
- * withFileMutationQueue directly, since it's a one-shot full-content write with no
- * read-modify-write need), but /implement and /commit both read-then-mutate-then-write
- * a single slice's checkbox state, which is what loadPlanStatusList/writeSliceState below
- * are for.
+ * Everything artifact-related for the develop-feature extension: feature-name
+ * slugification, `.artifacts/<slug>/{SPEC,PLAN}.md` path helpers, PLAN.md grammar
+ * (parse/validate/mutate), and the shared write-artifact I/O helper + tool-
+ * registration factory used by `write_spec`/`write_plan`.
  *
- * Enforced format:
+ * PLAN.md format enforced here:
  *
  * ## Status
  *
@@ -23,8 +20,72 @@
  * Checkbox states: `[ ]` not started, `[-]` pending review, `[x]` implemented & committed.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { existsSync, readdirSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import { Type } from "typebox";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+import { readState, transitionTo } from "./workflow.ts";
+
+export function slugifyFeature(feature: string): string {
+    const slug = feature
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    return slug.length > 0 ? slug : "untitled-feature";
+}
+
+const ARTIFACTS_DIR_NAME = ".artifacts";
+const SPEC_FILE_NAME = "SPEC.md";
+const PLAN_FILE_NAME = "PLAN.md";
+
+/** Shared shape behind specPath/planPath/specRelativePath/planRelativePath below: every
+ * artifact lives at .artifacts/<slug>/<fileName>, either resolved against a cwd or as a
+ * cwd-relative path. */
+function artifactPath(cwd: string, slug: string, fileName: string): string {
+    return resolve(cwd, join(ARTIFACTS_DIR_NAME, slug, fileName));
+}
+
+function artifactRelativePath(slug: string, fileName: string): string {
+    return join(ARTIFACTS_DIR_NAME, slug, fileName);
+}
+
+export function specPath(cwd: string, slug: string): string {
+    return artifactPath(cwd, slug, SPEC_FILE_NAME);
+}
+
+export function planPath(cwd: string, slug: string): string {
+    return artifactPath(cwd, slug, PLAN_FILE_NAME);
+}
+
+export function specRelativePath(slug: string): string {
+    return artifactRelativePath(slug, SPEC_FILE_NAME);
+}
+
+export function planRelativePath(slug: string): string {
+    return artifactRelativePath(slug, PLAN_FILE_NAME);
+}
+
+export function artifactsDir(cwd: string): string {
+    return resolve(cwd, ARTIFACTS_DIR_NAME);
+}
+
+/**
+ * List .artifacts/ subfolder (slug) names that contain the given file, filtered by a
+ * name prefix. Used for /plan and /implement argument autocompletion.
+ */
+export function listArtifactSlugsWithFile(cwd: string, fileName: string, prefix: string): string[] {
+    const dir = artifactsDir(cwd);
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .filter((name) => name.startsWith(prefix))
+        .filter((name) => existsSync(`${dir}/${name}/${fileName}`))
+        .sort();
+}
 
 export interface SliceStatus {
     number: number;
@@ -64,7 +125,7 @@ export function parseStatusSection(content: string): SliceStatus[] | undefined {
 
 /** All "## Slice N: title" headings anywhere in the doc, in document order, including
  * any duplicate slice numbers (callers that care about duplicates should inspect this
- * instead of - or alongside - parseSliceHeadings). */
+ * directly, as validatePlan does). */
 export function parseSliceHeadingEntries(content: string): { number: number; title: string }[] {
     const entries: { number: number; title: string }[] = [];
     const re = new RegExp(SLICE_HEADING_RE, "gm");
@@ -73,17 +134,6 @@ export function parseSliceHeadingEntries(content: string): { number: number; tit
         entries.push({ number: Number(m[1]), title: m[2] });
     }
     return entries;
-}
-
-/** Map slice number -> title, from "## Slice N: title" headings anywhere in the doc.
- * If a number appears more than once, the last occurrence wins (see
- * parseSliceHeadingEntries / validatePlan for duplicate detection). */
-export function parseSliceHeadings(content: string): Map<number, string> {
-    const map = new Map<number, string>();
-    for (const entry of parseSliceHeadingEntries(content)) {
-        map.set(entry.number, entry.title);
-    }
-    return map;
 }
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
@@ -117,8 +167,7 @@ export function validatePlan(content: string): ValidationResult {
         }
     }
     // Single pass over the parsed headings, building both the lookup map and the
-    // per-number occurrence count (avoids re-parsing the document a second time via
-    // parseSliceHeadings, which would redo the same regex scan).
+    // per-number occurrence count (avoids re-parsing the document a second time).
     const headings = new Map<number, string>();
     const headingCounts = new Map<number, number>();
     for (const entry of parseSliceHeadingEntries(content)) {
@@ -236,4 +285,81 @@ export async function writeSliceState(
         await writeFile(planFilePath, updated, "utf8");
     });
     return updated;
+}
+
+/**
+ * Generalized write-artifact I/O: ensure the parent directory exists, then write the
+ * full file content, all guarded by the shared file-mutation queue. Used by both
+ * write_spec and write_plan (via registerWriteArtifactTool below).
+ */
+export async function writeArtifact(path: string, content: string): Promise<void> {
+    await withFileMutationQueue(path, async () => {
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(path, content, "utf8");
+    });
+}
+
+export interface WriteArtifactToolConfig {
+    /** Tool name, e.g. "write_spec". */
+    name: string;
+    /** Tool label, e.g. "write-spec". */
+    label: string;
+    /** Tool description shown to the model. */
+    description: string;
+    /** Description of the single `content` string parameter. */
+    contentDescription: string;
+    /** Phase this tool is only usable in (guard fails otherwise). */
+    requiredPhase: string;
+    /** Error message thrown when the phase guard fails. */
+    guardMessage: string;
+    /** Optional content validation run before writing (e.g. PLAN.md grammar). */
+    validate?: (content: string) => ValidationResult;
+    /** Resolves the on-disk path to write to, given the current feature slug. */
+    getPath: (cwd: string, feature: string) => string;
+    /** Phase to transition to after a successful write. */
+    nextPhase: string;
+    /** Builds the tool's returned success text from the written file's path. */
+    successMessage: (path: string) => string;
+}
+
+/**
+ * Shared write-artifact tool-registration factory: write_spec and write_plan
+ * duplicate not just the write logic but the whole registerTool() shape (single
+ * `content` string parameter, a phase guard, the write, the transition, and an
+ * identical text-content return shape). write_commit is NOT built via this factory -
+ * its parameters, git side effects, and multi-step validation differ enough to stay
+ * bespoke.
+ */
+export function registerWriteArtifactTool(pi: ExtensionAPI, config: WriteArtifactToolConfig): void {
+    pi.registerTool({
+        name: config.name,
+        label: config.label,
+        description: config.description,
+        parameters: Type.Object({
+            content: Type.String({ description: config.contentDescription }),
+        }),
+        async execute(_toolCallId, params, _signal, _onUpdate, ctx: ExtensionContext) {
+            const state = readState(ctx);
+            if (!state || state.phase !== config.requiredPhase) {
+                throw new Error(config.guardMessage);
+            }
+
+            if (config.validate) {
+                const validation = config.validate(params.content);
+                if (!validation.ok) {
+                    throw new Error(validation.reason);
+                }
+            }
+
+            const path = config.getPath(ctx.cwd, state.feature);
+            await writeArtifact(path, params.content);
+
+            transitionTo(pi, ctx, { feature: state.feature, phase: config.nextPhase });
+
+            return {
+                content: [{ type: "text", text: config.successMessage(path) }],
+                details: undefined,
+            };
+        },
+    });
 }

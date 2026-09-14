@@ -10,7 +10,7 @@ import {
     type ToolCallEvent,
     type ToolCallEventResult,
 } from "@earendil-works/pi-coding-agent";
-import { getState } from "./state.ts";
+import { readState, type TransientPhase } from "./workflow.ts";
 
 // Applies to every gated phase (clarifying, planning, implementing).
 export const BASH_DENYLIST_BASE: RegExp[] = [
@@ -76,7 +76,7 @@ export const BASH_ALLOWLIST: RegExp[] = [
     /\bwc\b/i,
 ];
 
-const PHASE_BASH_POLICY: Record<string, "strict" | "base"> = {
+const PHASE_BASH_POLICY: Record<TransientPhase, "strict" | "base"> = {
     clarifying: "strict",
     planning: "strict",
     implementing: "base",
@@ -89,8 +89,8 @@ export function createBashGate(pi: ExtensionAPI) {
         ctx: ExtensionContext,
     ): Promise<ToolCallEventResult | void> => {
         if (!isToolCallEventType("bash", event)) return;
-        const state = getState(ctx);
-        const policy = state ? PHASE_BASH_POLICY[state.phase] : undefined;
+        const state = readState(ctx);
+        const policy = state ? PHASE_BASH_POLICY[state.phase as TransientPhase] : undefined;
         if (!policy) return; // not in a gated phase - no restriction
 
         const command = event.input.command;

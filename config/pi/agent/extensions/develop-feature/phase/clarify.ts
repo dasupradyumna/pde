@@ -4,15 +4,9 @@
  * conversation, ending with a written SPEC.md.
  */
 
-import { dirname } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
-import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
-import { getState, persistState } from "./state.ts";
-import { applyToolsForCurrentPhase } from "./phase-tools.ts";
-import { navigateToSessionStart } from "./session-nav.ts";
-import { slugifyFeature, specPath, specRelativePath } from "./slug.ts";
+import { navigateToSessionStart, readState, transitionTo } from "../workflow.ts";
+import { registerWriteArtifactTool, slugifyFeature, specPath, specRelativePath } from "../artifacts.ts";
 
 const FEATURE_TITLE_MODEL = "anthropic/claude-haiku-4-5";
 const MAX_FALLBACK_TITLE_LENGTH = 30;
@@ -96,7 +90,7 @@ export function registerClarify(pi: ExtensionAPI): void {
             "Start clarifying a new feature request, or " +
             "revise existing spec for the current one with feedback",
         handler: async (args, ctx) => {
-            const state = getState(ctx);
+            const state = readState(ctx);
 
             if (state === undefined) {
                 const request = args.trim();
@@ -108,8 +102,7 @@ export function registerClarify(pi: ExtensionAPI): void {
                 const title = await generateFeatureTitle(pi, ctx, request);
                 const slug = slugifyFeature(title);
                 await navigateToSessionStart(pi, ctx);
-                persistState(pi, { feature: slug, phase: "clarifying" });
-                applyToolsForCurrentPhase(pi, ctx);
+                transitionTo(pi, ctx, { feature: slug, phase: "clarifying" });
                 pi.sendUserMessage(buildClarifyKickoff(request));
             } else if (state.phase === "clarified") {
                 const feedback = args.trim();
@@ -118,8 +111,7 @@ export function registerClarify(pi: ExtensionAPI): void {
                     return;
                 }
 
-                persistState(pi, { feature: state.feature, phase: "clarifying" });
-                applyToolsForCurrentPhase(pi, ctx);
+                transitionTo(pi, ctx, { feature: state.feature, phase: "clarifying" });
                 pi.sendUserMessage(
                     buildClarifyFeedbackKickoff(feedback, specRelativePath(state.feature)),
                 );
@@ -132,34 +124,17 @@ export function registerClarify(pi: ExtensionAPI): void {
         },
     });
 
-    pi.registerTool({
+    registerWriteArtifactTool(pi, {
         name: "write_spec",
         label: "write-spec",
         description:
             "Write the final SPEC.md for the feature currently being clarified. Call this exactly" +
             " once, only after the user has explicitly confirmed the requirements are final.",
-        parameters: Type.Object({
-            content: Type.String({ description: "Full SPEC.md content in Markdown" }),
-        }),
-        async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-            const state = getState(ctx);
-            if (!state || state.phase !== "clarifying") {
-                throw new Error("write_spec is only usable while `/clarify` is in progress.");
-            }
-
-            const path = specPath(ctx.cwd, state.feature);
-            await withFileMutationQueue(path, async () => {
-                await mkdir(dirname(path), { recursive: true });
-                await writeFile(path, params.content, "utf8");
-            });
-
-            persistState(pi, { feature: state.feature, phase: "clarified" });
-            applyToolsForCurrentPhase(pi, ctx);
-
-            return {
-                content: [{ type: "text", text: `SPEC.md written to: ${path}` }],
-                details: undefined,
-            };
-        },
+        contentDescription: "Full SPEC.md content in Markdown",
+        requiredPhase: "clarifying",
+        guardMessage: "write_spec is only usable while `/clarify` is in progress.",
+        getPath: specPath,
+        nextPhase: "clarified",
+        successMessage: (path) => `SPEC.md written to: ${path}`,
     });
 }

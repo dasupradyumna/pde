@@ -4,22 +4,17 @@
  */
 
 import { existsSync } from "node:fs";
-import { dirname } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
-import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
-import { getState, persistState } from "./state.ts";
-import { applyToolsForCurrentPhase } from "./phase-tools.ts";
-import { navigateToSessionStart } from "./session-nav.ts";
+import { navigateToSessionStart, readState, transitionTo } from "../workflow.ts";
 import {
     listArtifactSlugsWithFile,
     planPath,
     planRelativePath,
+    registerWriteArtifactTool,
     specPath,
     specRelativePath,
-} from "./slug.ts";
-import { validatePlan } from "./plan-format.ts";
+    validatePlan,
+} from "../artifacts.ts";
 
 function buildPlanKickoff(slug: string, specRelPath: string): string {
     return `Read \`${specRelPath}\` now - it's the finalized spec for this feature.
@@ -90,7 +85,7 @@ export function registerPlan(pi: ExtensionAPI): void {
             }));
         },
         handler: async (args, ctx) => {
-            const state = getState(ctx);
+            const state = readState(ctx);
             let slug: string;
 
             if (state === undefined) {
@@ -116,8 +111,7 @@ export function registerPlan(pi: ExtensionAPI): void {
                     return;
                 }
 
-                persistState(pi, { feature: state.feature, phase: "planning" });
-                applyToolsForCurrentPhase(pi, ctx);
+                transitionTo(pi, ctx, { feature: state.feature, phase: "planning" });
                 pi.sendUserMessage(
                     buildPlanFeedbackKickoff(feedback, planRelativePath(state.feature)),
                 );
@@ -140,45 +134,23 @@ export function registerPlan(pi: ExtensionAPI): void {
             }
 
             await navigateToSessionStart(pi, ctx);
-            persistState(pi, { feature: slug, phase: "planning" });
-            applyToolsForCurrentPhase(pi, ctx);
+            transitionTo(pi, ctx, { feature: slug, phase: "planning" });
             pi.sendUserMessage(buildPlanKickoff(slug, specRelativePath(slug)));
         },
     });
 
-    pi.registerTool({
+    registerWriteArtifactTool(pi, {
         name: "write_plan",
         label: "write-plan",
         description:
             "Write the final PLAN.md for the feature currently being planned. Call this exactly " +
             "once, with content matching the required PLAN.md format.",
-        parameters: Type.Object({
-            content: Type.String({ description: "Full PLAN.md content in Markdown" }),
-        }),
-        async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-            const state = getState(ctx);
-            if (!state || state.phase !== "planning") {
-                throw new Error("write_plan is only usable while /plan is in progress.");
-            }
-
-            const validation = validatePlan(params.content);
-            if (!validation.ok) {
-                throw new Error(validation.reason);
-            }
-
-            const path = planPath(ctx.cwd, state.feature);
-            await withFileMutationQueue(path, async () => {
-                await mkdir(dirname(path), { recursive: true });
-                await writeFile(path, params.content, "utf8");
-            });
-
-            persistState(pi, { feature: state.feature, phase: "planned" });
-            applyToolsForCurrentPhase(pi, ctx);
-
-            return {
-                content: [{ type: "text", text: `PLAN.md written to ${path}` }],
-                details: undefined,
-            };
-        },
+        contentDescription: "Full PLAN.md content in Markdown",
+        requiredPhase: "planning",
+        guardMessage: "write_plan is only usable while /plan is in progress.",
+        validate: validatePlan,
+        getPath: planPath,
+        nextPhase: "planned",
+        successMessage: (path) => `PLAN.md written to ${path}`,
     });
 }
