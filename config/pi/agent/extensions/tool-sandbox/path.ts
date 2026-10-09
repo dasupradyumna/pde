@@ -10,11 +10,11 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import {
-    type ExtensionContext,
-    type ToolCallEvent,
-    type ToolCallEventResult,
-    isToolCallEventType,
+import type {
+    EditToolCallEvent,
+    ExtensionContext,
+    ToolCallEventResult,
+    WriteToolCallEvent,
 } from "@earendil-works/pi-coding-agent";
 
 /** Stable, kebab-case rule identifiers — also the row key in README.md's class tables. */
@@ -160,19 +160,17 @@ function formatPathReason(
 }
 
 /**
- * Factory producing the `tool_call` handler that gates `edit`/`write` tool calls per
- * SPEC §6. No-ops for any other tool. Never shows a confirmation dialog — pure
- * allow/deny.
+ * `tool_call` gate logic for `edit`/`write` tool calls per SPEC §6, dispatched to by
+ * `index.ts`'s single `tool_call` handler (already narrowed to `edit`/`write` by the
+ * caller — this function does not re-check the tool name). Never shows a confirmation
+ * dialog — pure allow/deny.
  */
-export function createPathGate() {
-    return (event: ToolCallEvent, ctx: ExtensionContext): ToolCallEventResult | undefined => {
-        if (!isToolCallEventType("edit", event) && !isToolCallEventType("write", event)) {
-            return undefined;
-        }
+export function pathGate(
+    event: EditToolCallEvent | WriteToolCallEvent,
+    ctx: ExtensionContext,
+): ToolCallEventResult | undefined {
+    const result = validateSandboxPath(event.input.path, ctx.cwd);
+    if (result.ok) return undefined;
 
-        const result = validateSandboxPath(event.input.path, ctx.cwd);
-        if (result.ok) return undefined;
-
-        return { block: true, reason: formatPathReason(event.input.path, result) };
-    };
+    return { block: true, reason: formatPathReason(event.input.path, result) };
 }

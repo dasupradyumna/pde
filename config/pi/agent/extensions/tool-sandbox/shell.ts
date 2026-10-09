@@ -16,12 +16,10 @@
  */
 
 import type {
-    ExtensionAPI,
+    BashToolCallEvent,
     ExtensionContext,
-    ToolCallEvent,
     ToolCallEventResult,
 } from "@earendil-works/pi-coding-agent";
-import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { validateSandboxPath } from "./path.ts";
 
 /**
@@ -822,49 +820,46 @@ function formatAskNoUIReason(askSegments: ClassifiedSegment[], rawCommand: strin
 }
 
 /**
- * Factory producing the `tool_call` handler that gates `bash` tool calls per SPEC
- * §7. No-ops for any other tool.
+ * `tool_call` gate logic for `bash` tool calls per SPEC §7, dispatched to by
+ * `index.ts`'s single `tool_call` handler (already narrowed to `bash` by the
+ * caller — this function does not re-check the tool name).
  *
  * Implements DENY (whole-command block), ASK (confirm dialog, with a no-UI
  * fallback to DENY), and ALLOW (pass-through) aggregation per §7.5.
  */
-export function createShellGate(_pi: ExtensionAPI) {
-    return async (
-        event: ToolCallEvent,
-        ctx: ExtensionContext,
-    ): Promise<ToolCallEventResult | undefined> => {
-        if (!isToolCallEventType("bash", event)) return undefined;
+export async function shellGate(
+    event: BashToolCallEvent,
+    ctx: ExtensionContext,
+): Promise<ToolCallEventResult | undefined> {
+    const rawCommand = event.input.command;
 
-        const rawCommand = event.input.command;
+    if (hasUnquotedProcessSubstitution(rawCommand)) {
+        const procSub = SHELL_DENYLIST["process-substitution"]!;
+        return {
+            block: true,
+            reason: formatShellDenyReason("process-substitution", procSub.message!, rawCommand),
+        };
+    }
 
-        if (hasUnquotedProcessSubstitution(rawCommand)) {
-            const procSub = SHELL_DENYLIST["process-substitution"]!;
-            return {
-                block: true,
-                reason: formatShellDenyReason("process-substitution", procSub.message!, rawCommand),
-            };
+    const classified = decomposeAndClassify(rawCommand, ctx.cwd);
+    const denied = classified.find((segment) => segment.action === "deny");
+    if (denied) {
+        return {
+            block: true,
+            reason: formatShellDenyReason(denied.className, denied.message!, rawCommand),
+        };
+    }
+
+    const asked = dedupeByClassName(classified.filter((segment) => segment.action === "ask"));
+    if (asked.length > 0) {
+        if (!ctx.hasUI) {
+            return { block: true, reason: formatAskNoUIReason(asked, rawCommand) };
         }
-
-        const classified = decomposeAndClassify(rawCommand, ctx.cwd);
-        const denied = classified.find((segment) => segment.action === "deny");
-        if (denied) {
-            return {
-                block: true,
-                reason: formatShellDenyReason(denied.className, denied.message!, rawCommand),
-            };
+        const confirmed = await ctx.ui.confirm("tool-sandbox", formatAskConfirmMessage(asked, rawCommand));
+        if (!confirmed) {
+            return { block: true, reason: formatAskDeclineReason(asked, rawCommand) };
         }
+    }
 
-        const asked = dedupeByClassName(classified.filter((segment) => segment.action === "ask"));
-        if (asked.length > 0) {
-            if (!ctx.hasUI) {
-                return { block: true, reason: formatAskNoUIReason(asked, rawCommand) };
-            }
-            const confirmed = await ctx.ui.confirm("tool-sandbox", formatAskConfirmMessage(asked, rawCommand));
-            if (!confirmed) {
-                return { block: true, reason: formatAskDeclineReason(asked, rawCommand) };
-            }
-        }
-
-        return undefined;
-    };
+    return undefined;
 }

@@ -5,13 +5,36 @@
  *
  * Stateless and unconditional — unlike develop-feature's bash-policy.ts, this
  * applies in every session regardless of any other extension's state.
+ *
+ * A single `tool_call` handler dispatches to the per-tool gate logic: `pathGate`
+ * (path.ts) for `edit`/`write`, `shellGate` (shell.ts) for `bash`. No-ops for
+ * every other tool.
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createPathGate } from "./path.ts";
-import { createShellGate } from "./shell.ts";
+import type {
+    ExtensionAPI,
+    ExtensionContext,
+    ToolCallEvent,
+    ToolCallEventResult,
+} from "@earendil-works/pi-coding-agent";
+import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
+import { pathGate } from "./path.ts";
+import { shellGate } from "./shell.ts";
 
 export default function (pi: ExtensionAPI): void {
-    pi.on("tool_call", createPathGate());
-    pi.on("tool_call", createShellGate(pi));
+    pi.on(
+        "tool_call",
+        (
+            event: ToolCallEvent,
+            ctx: ExtensionContext,
+        ): Promise<ToolCallEventResult | undefined> | ToolCallEventResult | undefined => {
+            if (isToolCallEventType("edit", event) || isToolCallEventType("write", event)) {
+                return pathGate(event, ctx);
+            }
+            if (isToolCallEventType("bash", event)) {
+                return shellGate(event, ctx);
+            }
+            return undefined;
+        },
+    );
 }
