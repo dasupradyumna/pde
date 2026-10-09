@@ -3,8 +3,8 @@
  * calls (`edit`, `write`, `bash`) before execution. See SPEC.md /
  * agent/extensions/tool-sandbox/README.md for the full policy.
  *
- * Stateless and unconditional — unlike develop-feature's bash-policy.ts, this
- * applies in every session regardless of any other extension's state.
+ * Stateless and unconditional — applies in every session regardless of any
+ * other extension's state.
  *
  * A single `tool_call` handler dispatches to the per-tool gate logic: `pathGate`
  * (path.ts) for `edit`/`write`, `shellGate` (shell.ts) for `bash`. No-ops for

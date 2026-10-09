@@ -28,16 +28,13 @@ Artifacts live on disk at `.artifacts/<feature-slug>/{SPEC,PLAN}.md`.
 
 ## Files
 
-- **`index.ts`**  Extension entrypoint. Registers the three commands, the bash gate on `tool_call`,
-  and the `session_start` hook that restores tools/status for the current phase.
+- **`index.ts`**  Extension entrypoint. Registers the three commands and the `session_start` hook
+  that restores tools/status for the current phase.
 - **`workflow.ts`**: State-machine core: `State` shape, `implemented:X/Y` helpers, phase-name type
   (`TransientPhase`), persisted read/write (`readState`/`writeState` via append-only session
   entries), phase-to-tools/status map (`PHASE_TOOLS`/`applyToolsForCurrentPhase`), the
   `transitionTo` helper combining both, and `navigateToSessionStart` for resetting session context
   before each kickoff.
-- **`bash-policy.ts`**: Regex denylists / allowlist gating `bash` tool calls per phase (`strict` for
-  clarifying/planning, `base` for implementing) plus a user-confirm fallback. Phase keys are typed
-  from `workflow.ts`'s shared phase-name type.
 - **`artifacts.ts`**: Artifact I/O and `PLAN.md` grammar (sole owner of `PLAN.md` I/O). Feature
   slugification, `.artifacts/<slug>/{SPEC,PLAN}.md` path helpers, slug autocompletion for `/plan`
   and `/implement` commands; `PLAN.md` parsing/validation and its slice-checkbox mutation

@@ -4,9 +4,8 @@ Always-on, global Pi extension. Validates every `edit`, `write`, and `bash` buil
 *before* execution: `edit`/`write` are gated by filesystem-path containment (`path.ts`); `bash` is
 gated by regex-based command classification of a heuristically decomposed composite command
 (`shell.ts`), which also reuses `path.ts` to close path-based bypasses (`cd`, redirects, `mkdir`,
-`touch`). Unconditional — active in every session regardless of any other extension's state
-(including `develop-feature`'s separate, phase-gated `bash-policy.ts`, which this extension does
-not read, modify, or coordinate with). This file is agent-facing reference, not human prose: it
+`touch`). Unconditional — active in every session regardless of any other extension's state. This
+file is agent-facing reference, not human prose: it
 exists so an agent can predict/explain a rejection without reading the source.
 
 ## Allowed roots & dot-entry rule

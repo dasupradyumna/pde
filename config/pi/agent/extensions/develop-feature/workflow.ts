@@ -31,8 +31,7 @@ export function formatImplementedPhase(x: number, y: number): string {
     return `implemented:${x}/${y}`;
 }
 
-// The set of transient (gated, in-progress) phase names, shared by `PHASE_TOOLS` here and
-// `PHASE_BASH_POLICY` in bash-policy.ts.
+// The set of transient (gated, in-progress) phase names, used by `PHASE_TOOLS` below.
 export const TRANSIENT_PHASES = ["clarifying", "planning", "implementing"] as const;
 export type TransientPhase = (typeof TRANSIENT_PHASES)[number];
 
